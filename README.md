@@ -1,2 +1,2 @@
 # JeunePousse
-Projet d'arrosage automatique
+Projet d'arrosage automatique d'une plante
