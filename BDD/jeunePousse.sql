@@ -77,8 +77,5 @@ CREATE TABLE measure (
   SensoractionReference INTEGER,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (SensoractionReference) REFERENCES sensoraction(id));
-<<<<<<< HEAD
 
  INSERT INTO user(Name, Email, Password, HomeReference) VALUES("Younes", "younes@jeunepousse.fr", "pousse", 0);
-=======
->>>>>>> 837d559c356c197de8853045ed3ccd82ce1b71aa
