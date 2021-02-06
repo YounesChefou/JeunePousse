@@ -6,9 +6,13 @@ import json
 
 class MyHandler(http.server.BaseHTTPRequestHandler):
 	def __init__(self, *args, **kwargs):
+		print("Initialisation")
 		self.mysql = MySQL('../BDD/jeunepousse.db')
 		self.user = 'user' #Mis à jour quand l'utilisateur s'identifie, pour afficher seulement ses plantes
+		self.id_user = 0 #Id de l'utilisateur
 		super(MyHandler, self).__init__(*args, **kwargs)
+
+
 
 	def do_GET(self):
 		"""Respond to a GET request."""
@@ -16,47 +20,63 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 		#TODO : Remplacer par les noms de tables
 		tables = ['/utilisateurs', '/logement', '/pieces', '/references', '/plantes_utilisateur']
 
+		print("Path : {}".format(self.path.lower()))
+		print("ID : {}".format(self.id_user))
 		if self.path.lower() == "/favicon.ico" : #Icone dans la barre d'accueil
 			return
-		elif self.path.lower() == "/" or self.path.lower() == "/accueil": #Page d'accueil, accueil comme
+		elif self.path.lower() == "/" and self.id_user == 0: #Page d'identification
+			print("Identification")
 			self.send_response(200)
 			self.send_header("Content-type", "text/html")
 			self.end_headers()
-
-			codeHTML = """
-			<!DOCTYPE html>
-			<html lang="fr">
-			    <head>
-
-			        <title>Page d'accueil</title>
-					<meta charset="utf-8">
-			        <meta name="viewport" content="width=device-width, initial-scale=1">
-			        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-			        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-			        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-			        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-					<style>
-					#div_img{
-					 	position:fixed;
-		 				padding:0;
-						margin:0;
-						top:0;
-						left:0;
-						width:100%;
-						height:100%;
-						background-image: url('https://elemental.green/wp-content/uploads/2017/06/Depositphotos_10522904_m-2015-999x640.jpg');
-						background-size: cover;
-						z-index: -1;
-						opacity:0.4;
-					}
-					</style>
-				</head>
-			"""
-			f = open("barre_navigation.html")
-			codeHTML += f.read()
-			f = open("accueil.html")
-			codeHTML += f.read()
+			f = open("identification.html")
+			codeHTML = f.read()
 			self.wfile.write(bytes(str(codeHTML), 'UTF-8'))
+
+		# elif self.id_user == 0: #Redirection vers la page d'identification si utilisateur non identifié
+		# 	self.send_response(301)
+		# 	self.send_header('Location','/')
+		# 	self.end_headers()
+
+		elif self.path.lower() == "/accueil": #Page d'accueil, accueil comme
+				self.send_response(200)
+				self.send_header("Content-type", "text/html")
+				self.end_headers()
+				print("Accueil")
+				codeHTML = """
+				<!DOCTYPE html>
+				<html lang="fr">
+				    <head>
+
+				        <title>Page d'accueil</title>
+						<meta charset="utf-8">
+				        <meta name="viewport" content="width=device-width, initial-scale=1">
+				        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+				        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+				        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+				        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+						<style>
+						#div_img{
+						 	position:fixed;
+			 				padding:0;
+							margin:0;
+							top:0;
+							left:0;
+							width:100%;
+							height:100%;
+							background-image: url('https://elemental.green/wp-content/uploads/2017/06/Depositphotos_10522904_m-2015-999x640.jpg');
+							background-size: cover;
+							z-index: -1;
+							opacity:0.4;
+						}
+						</style>
+					</head>
+				"""
+				f = open("barre_navigation.html")
+				codeHTML += f.read()
+				f = open("accueil.html")
+				codeHTML += f.read()
+				self.wfile.write(bytes(str(codeHTML), 'UTF-8'))
 
 		elif self.path.lower() == "/mesplantes":
 			self.send_response(200)
@@ -75,18 +95,35 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 			        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 			        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 			        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+					<style>
+					#div_img{
+						position:fixed;
+						padding:0;
+						margin:0;
+						top:0;
+						left:0;
+						width:100%;
+						height:100%;
+						background-image: url('https://elemental.green/wp-content/uploads/2017/06/Depositphotos_10522904_m-2015-999x640.jpg');
+						background-size: cover;
+						z-index: -1;
+						opacity:0.4;
+					}
+					</style>
 			"""
 
 			f = open("barre_navigation.html")
 			codeHTML += f.read()
-			codeHTML += self.mesplantes() #TODO: A voir si des parametres sont necessaires, normalement non
+			# codeHTML += self.mesplantes() #TODO: A voir si des parametres sont necessaires, normalement non
+			f = open("mesplantes.html")
+			codeHTML += f.read()
 			self.wfile.write(bytes(str(codeHTML), 'UTF-8'))
 
 		elif self.path.lower() == "/guide_plante":
 			pass
 
 		elif self.path.lower() == "/configuration":
-			elf.send_response(200)
+			self.send_response(200)
 			self.send_header("Content-type", "text/html")
 			self.end_headers()
 
@@ -120,9 +157,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 				</head>
 			"""
 			f = open("barre_navigation.html")
-			codeHTML += f.read()
-			codeHTML += self.pageConfiguration()
-			f = open("fin_page.html")
+			codeHTML = f.read()
+			# codeHTML += self.pageConfiguration()
+			f = open("configuration.html")
 			codeHTML += f.read()
 			self.wfile.write(bytes(str(codeHTML), 'UTF-8'))
 
@@ -159,19 +196,80 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 		"""Respond to a POST request."""
 		print(self.path)
 		res = urllib.parse.urlparse(self.path)
-		print(res)
 
+		#Verification des données
 		if res.query != '':
 			query = urllib.parse.parse_qs(res.query)
+
+		elif self.path.lower() == "/accueil":
+			print(res)
+			q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+			query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+			print('query :')
+			print(q)
+			print(query)
+			print(query['email'])
+			email = query['email'][0]
+			print(query['password'])
+			req = "SELECT id FROM user where Email=\""+str(query['email'][0])+"\" and Password=\""+str(query['password'][0])+"\";";
+			print(req)
+			id_user = self.mysql.c.execute(req).fetchall()
+			print(id_user)
+
+			if id_user == list(): #Mauvais identifiant ou mot de passe, renvoyer vers page identification
+				self.send_response(301)
+				self.send_header('Location','/')
+				self.end_headers()
+			else:
+				id_user = id_user[0][0]
+				self.id_user = id_user
+				print("id_user :")
+				print(self.id_user)
+				# self.path = "/accueil"
+				# self.do_GET()
+				self.send_response(301)
+				self.send_header('Location','/accueil')
+				self.end_headers()
+		elif self.path.lower() == "/ajoutPiece":
+			print(res)
+			q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+			query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+			nomPiece = query['nomPiece'][0]
+			refLogement = 1 #TODO : getLogement
+			req = 'INSERT INTO ROOM(Name, HomeReference) VALUES(\" '+nomPiece+'\",'+str(refLogement)+');'
+			print(req)
+			self.mysql.c.execute(req)
+			#Ajout réussi, on renvoie l'utilisateur sur cette page avec les données mises à jour
+			self.send_response(301)
+			self.send_header('Location', '/configuration')
+			self.end_headers()
+
+		elif self.path.lower() == "/ajoutPlante":
+			print(res)
+			q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+			query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+			plantRef = query['plantRef'][0]
+			roomRef = query['roomRef'][0]
+			kitRef = query['kitRef'][0]
+
+			refLogement = 1 #TODO : getLogement
+			req = "INSERT INTO PLANT(PlantReference, RoomReference, KitReference) VALUES("++ ")"
+			print(req)
+			self.mysql.c.execute(req)
+			#Ajout réussi, on renvoie l'utilisateur sur cette page avec les données mises à jour
+			self.send_response(301)
+			self.send_header('Location', '/configuration')
+			self.end_headers()
+
 		else:
+			self.send_response(200)
+			self.send_header("Content-type", "text/html")
+			self.end_headers()
 			q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
 			print(q)
 			query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
-		print(query)
-		rep = self.mysql.insert(res.path,query)
-		self.send_response(200)
-		self.send_header("Content-type", "text/html")
-		self.end_headers()
+			print(query)
+			rep = self.mysql.insert(res.path,query)
 
 	def meteo(self):
 		#Lien vers JSON, renvoyant prévision
@@ -218,13 +316,20 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 		print(nbChambres)
 
 		#On boucle maintenant pour recuperer chaque plante et les informations associés
-		for id_room in range (1, nbChambres+1):
-
-			req = "SELECT * FROM PLANTE WHERE RoomReference="+str(id_room)+";"
-			donnees = self.toJSON('PLANTE', req).json()
-
-			
-
+		# for id_room in range (1, nbChambres+1):
+		#
+		# 	req = "SELECT * FROM PLANTE WHERE RoomReference="+str(id_room)+";"
+		# 	donnees = self.toJSON('PLANTE', req).json()
+		#
+		# 	#Liste pour chaque plante
+		# 	codeHTML += "<ul>"
+		# 	for plante in donnees:
+		# 		pass
+		#
+		# 	codeHTML += "</ul>"
+		codeHTML +=
+		codeHTML += "<ul>"
+		codeHTML += "</ul>"
 		# f = open("dash.html")
 		# codeHTML = f.read()
 		return codeHTML
@@ -313,13 +418,16 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 		"""
 		return codeHTML;
 
-	def toJSON(self, table, req="SELECT * FROM "+table+";"):
+	def toJSON(self, table, req=None):
 		reqColumn = "PRAGMA table_info("+table+");"
 
 		conn = self.mysql.conn
 		c = conn.cursor()
 		columns = c.execute(reqColumn).fetchall()
 		donnees = c.execute(req).fetchall()
+
+		if req is None:
+			req = "SELECT * FROM "+table+";"
 
 		fichierJSON = """
 		[
