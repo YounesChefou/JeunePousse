@@ -12,8 +12,6 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 		self.id_user = 0 #Id de l'utilisateur
 		super(MyHandler, self).__init__(*args, **kwargs)
 
-
-
 	def do_GET(self):
 		"""Respond to a GET request."""
 		res = urllib.parse.urlparse(self.path)

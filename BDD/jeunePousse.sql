@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS measure; --measure related to one sensor/action
 CREATE TABLE home (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   AddressNumber TEXT NOT NULL,
-  Sreet TEXT NOT NULL,
+  Street TEXT NOT NULL,
   City TEXT NOT NULL,
   PostalCode TEXT NOT NULL,
   Country TEXT NOT NULL,
@@ -51,6 +51,8 @@ CREATE TABLE plant (
   PlantReference INTEGER,
   RoomReference INTEGER,
   KitReference INTEGER,
+  PortCOM INTEGER,
+  ReferenceProductNumber INTEGER NOT NULL,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (PlantReference) REFERENCES plantreference(id),
   FOREIGN KEY (RoomReference) REFERENCES room(id),
@@ -77,5 +79,3 @@ CREATE TABLE measure (
   SensoractionReference INTEGER,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (SensoractionReference) REFERENCES sensoraction(id));
-
- INSERT INTO user(Name, Email, Password, HomeReference) VALUES("Younes", "younes@jeunepousse.fr", "pousse", 0);
