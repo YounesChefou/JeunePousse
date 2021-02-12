@@ -22,7 +22,7 @@ CREATE TABLE home (
 CREATE TABLE room (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   Name TEXT NOT NULL,
-  HomeReference INTEGER,
+  HomeReference INTEGER NOT NULL,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (HomeReference) REFERENCES logement(id));
 
@@ -31,7 +31,7 @@ CREATE TABLE user (
   Name TEXT NOT NULL, --user name
   Email TEXT NOT NULL, --email address
   Password TEXT NOT NULL, --user password
-  HomeReference INTEGER, --link to one home
+  HomeReference INTEGER NOT NULL, --link to one home
   LastConnection TIMESTAMP DEFAULT CURRENT_TIMESTAMP, --date of last user connection
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (HomeReference) REFERENCES logement(id));
@@ -40,18 +40,19 @@ CREATE TABLE plantreference (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   Name TEXT NOT NULL, --plant name
   Origin TEXT NOT NULL, --country origin of the plant
-  Temperature INTEGER, --best temperature for the plant
-  Humidity INTEGER, --best Humidity for the plant
-  Luminosity INTEGER, --best Luminosity for the plant
-  GroundQuality NUMBER, --best ground quality for the plant
+  Temperature INTEGER NOT NULL, --best temperature for the plant
+  Humidity INTEGER NOT NULL, --best Humidity for the plant
+  Luminosity INTEGER NOT NULL, --best Luminosity for the plant
+  GroundQuality INTEGER NOT NULL, --best ground quality for the plant
+  PictureUrl TEXT NOT NULL,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE plant (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  PlantReference INTEGER,
-  RoomReference INTEGER,
-  KitReference INTEGER,
-  PortCOM INTEGER,
+  PlantReference INTEGER NOT NULL,
+  RoomReference INTEGER NOT NULL,
+  KitReference INTEGER NOT NULL,
+  PortCOM INTEGER NOT NULL,
   ReferenceProductNumber INTEGER NOT NULL,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (PlantReference) REFERENCES plantreference(id),
@@ -69,13 +70,13 @@ CREATE TABLE sensoraction (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   Name TEXT NOT NULL, --sensor name
   Unit TEXT NOT NULL, --sensor measure unit
-  PlantReference INTEGER, --link to one room
+  PlantReference INTEGER NOT NULL, --link to one plant
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (PlantReference) REFERENCES plant(id));
 
 CREATE TABLE measure (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  Value REAL,
-  SensoractionReference INTEGER,
+  Value REAL NOT NULL,
+  SensoractionReference INTEGER NOT NULL,
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (SensoractionReference) REFERENCES sensoraction(id));
