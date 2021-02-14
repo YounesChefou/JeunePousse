@@ -247,14 +247,14 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
 
     content += '</div>'
 
-    content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>'
+    content += '<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js\"></script>'
     content += '<script> var timeFormat = \'YYYY-MM-DDTHH:mm\';'
     #f = open('graph.txt', 'r')
     #content += f.read()
     #f.close()
 
     for p in user_plant:
-        content += 'var g{} = document.getElementById("chart{}");'.format(p[0], p[0])
+        content += 'var ctx{} = document.getElementById("chart{}");'.format(p[0], p[0])
     for p in user_plant:
         colo = 0
         sensor = []
@@ -269,7 +269,7 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
                             value.append(m[1], convert_time(m[3]))
                             i -= 1
                 sensor.append(s[1], value) #nom du capteur, liste (valeurs, dateinsertion)
-        content += 'var new_chart{} = new Chart({}, '.format(p[0], p[0])
+        content += 'var new_chart{} = new Chart(ctx{}, '.format(p[0], p[0])
         content += '{ type: \'timeline\', data: { datasets: ['
         for s in sensor:
             content += '{label:'
