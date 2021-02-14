@@ -1,0 +1,98 @@
+// Un graphe = une variable
+var ctx = document.getElementById("chart1");
+var ctx2 = document.getElementById("chart2");
+
+var myChart = new Chart(ctx, {
+type: 'timeline',
+data: {
+  labels: ["08/02/2021", "09/02/2021", "10/02/2021", "11/02/2021"],
+  datasets: [{
+    label:'Humidite (%)',
+    data: [24003, 23489, 24092, 12034],
+    lineTension: 0,
+    backgroundColor: 'transparent',
+    borderColor: '#007bff',
+    borderWidth: 4,
+    pointBackgroundColor: '#007bff',
+    yAxisID: 'Pourcentage'
+  }, {
+    label: 'Luminosité (Lux)',
+    data: [35, 32, 40, 34],
+    lineTension: 0,
+    backgroundColor: 'transparent',
+    borderColor: '#ff00ff',
+    borderWidth: 4,
+    pointBackgroundColor: '#007bff',
+    yAxisID: 'Lux'
+  }]
+},
+options: {
+  scales: {
+    yAxes: [{
+      id: 'Lux',
+      type: 'linear',
+      position: 'right',
+      ticks: {
+        beginAtZero: false
+      }
+    }, {
+      id: 'Pourcentage',
+      type: 'linear',
+      position: 'left',
+      ticks: {
+        beginAtZero: false
+      }
+    }]
+  },
+  legend: {
+    display: true,
+  }
+},
+});
+var myChart2 = new Chart(ctx2, {
+type: 'line',
+data: {
+  labels: ["08/02/2021", "09/02/2021", "10/02/2021", "11/02/2021"],
+  datasets: [{
+    label:'Température (°C)',
+    data: [25, 24, 24, 24],
+    lineTension: 0,
+    backgroundColor: 'transparent',
+    borderColor: '#007bff',
+    borderWidth: 4,
+    pointBackgroundColor: '#007bff',
+    yAxisID: 'Pourcentage'
+  }, {
+    label: 'Volume d\'eau restant (mL)',
+    data: [50, 48, 46, 43],
+    lineTension: 0,
+    backgroundColor: 'transparent',
+    borderColor: '#ff00ff',
+    borderWidth: 4,
+    pointBackgroundColor: '#007bff',
+    yAxisID: 'Lux'
+  }]
+},
+options: {
+  scales: {
+    yAxes: [{
+      id: 'Lux',
+      type: 'linear',
+      position: 'right',
+      ticks: {
+        beginAtZero: false
+      }
+    }, {
+      id: 'Pourcentage',
+      type: 'linear',
+      position: 'left',
+      ticks: {
+        beginAtZero: false
+      }
+    }]
+  },
+  legend: {
+    display: true,
+  }
+},
+});
