@@ -83,7 +83,7 @@ def get_room_image(room_name):
     f.close()
     return content
 
-def construct_dashboard(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, user_sensor, user_measure, performance, active_room):
+def construct_dashboard(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, user_sensor, user_measure, performance, user_active_room):
     user = user_list
     user_home = home[0]
     user_room = []
@@ -95,9 +95,17 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
         if h[0] == user[4]:
             print(h)
             user_home = h
+    first_room = room_list[0]
     for p in room_list:
         if p[2] == user_home[0]:
             user_room.append(p)
+            first_room = p
+    if first_room == room_list[0]:
+        for p in room_list:
+            if p[2] == user_home[0]:
+                first_room = p
+                break
+    active_room = first_room[0]
     for pl in user_plant_list:
         if int(pl[2]) == int(active_room):
             user_plant.append(pl)
@@ -507,8 +515,8 @@ def construct_option_page(home, user_list, room_list, user_plant_list, kitrefere
     content += '<div class="col-sm-6 text-center">'
     #content += '<label class="mt-2" for="kit_name">Nom du kit</label>'
     #content += '<select class="form-control m-3" id="kit_name" name="kit_id" placeholder="Nom du kit">'
-    content += '<label class="mt-2" for="kit_name">Référence du kit</label>'
-    content += '<div><input class="form-control m-3" id="kit_reference" name="kit_id" placeholder="Numéro affiché sur votre module" required autofocus></div>'
+    content += '<label class="mt-2" for="module_reference">Référence du kit</label>'
+    content += '<div><input class="form-control m-3" id="module_reference" name="module_reference" placeholder="Numéro affiché sur votre module" required autofocus></div>'
 
     #for p in kitreference_list:
     #    content += '<option class="text-center" value="{}">{}</option>'.format(p[0], p[1])
@@ -900,6 +908,9 @@ def get_home(home_bdd, home_id):
             return u
     return []
 
+def serve_on_port(port):
+    server = ThreadingHTTPServer(("localhost",port), MyHandler)
+    server.serve_forever()
 
 class MyHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -1139,6 +1150,8 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     print('Error !!!!')
                 user = {'Name': [Name_t], 'Email':[Email_t], 'Password':[Password_t], 'HomeReference': [id]}
                 self.mysql.insert('/user', user)
+                user_list = self.mysql.select('/user')
+                user = user_list[-1]
                 for r in room_t:
                     room = {'Name': [r], 'HomeReference':[id]}
                     self.mysql.insert('/room', room)
@@ -1156,9 +1169,18 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 Password_t = ""
                 #room
                 room_t = []
-                f = open('site/identification.html', 'r')
-                content = f.read()
-                f.close()
+                room_list = self.mysql.select('/room')
+                user_plant_list = self.mysql.select('/plant')
+                sensor_list = self.mysql.select('/sensoraction')
+                measure_list = self.mysql.select('/measure')
+                home = self.mysql.select('/home')
+                kitreference_list = self.mysql.select('/kitreference') #a supp
+                reference_plant_list = self.mysql.select('/plantreference')
+                performance = '1'
+                active_room = '1'
+                content = construct_dashboard(home, user, room_list, user_plant_list, kitreference_list, reference_plant_list, sensor_list, measure_list, performance, active_room)
+                #content = construct_option_page(home, user, room_list, user_plant_list, kitreference_list, reference_plant_list, performance)
+                self.send_response(REDIRECTION)
 
             else :
                 content = create_account_add_rooms()
@@ -1219,31 +1241,74 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             user_t = split_path[-3]
 
             room_id = "{}".format(data.get('room_id')[0])
-            kit_id = "{}".format(data.get('kit_id')[0])
+            module_reference = "{}".format(data.get('module_reference')[0])
             plant_id = "{}".format(data.get('plant_id')[0])
-            plant = {'PlantReference': plant_id, 'RoomReference': room_id, 'KitReference': kit_id, 'PortCOM': '9999', 'ReferenceProductNumber': '1'}
-            user_plant_list = self.mysql.select('/plant')
-            not_in_room = True
-            for p in user_plant_list:
-                if (int(p[1] == int(plant_id)) & int(p[2]) == int(room_id) & int(p[3]) == int(kit_id)):
-                    not_in_room = False
-            if not_in_room:
-                self.mysql.insert('/plant', plant)
+
+            waiting_module = False
+            module_data = trying_to_connect_module[0]
+
+            for m in trying_to_connect_module:
+                if m[0] == module_reference: #il s'agit d'un module en attente
+                    waiting_module = True
+                    module_data = m[0]
+            kitreference_list = self.mysql.select('/kitreference')
+
+            if waiting_module: #on a un module en attente de connexion qui a cette reference temporaire de produit
+                #on ajoute le module dans la bdd si elle n'existe pas
+                plant = {'PlantReference': plant_id, 'RoomReference': room_id, 'KitReference': module_data[1], 'PortCOM': module_data[2], 'ReferenceProductNumber': module_reference}
+                user_plant_list = self.mysql.select('/plant')
+                not_in_room = True
+                plant_already_exists_in_room = user_plant_list[0]
+                for p in user_plant_list:
+                    if (int(p[1] == int(plant_id)) & int(p[2]) == int(room_id) & int(p[3]) == int(module_data[1])):
+                        not_in_room = False
+                        plant_already_exists_in_room = p
+                if not_in_room:
+                    self.mysql.insert('/plant', plant)
+                    user_plant_list = self.mysql.select('/plant')
+                    plant_id = len(user_plant_list)
+                    #on ajouter les capteurs lies au module dans la bdd
+                    for k in kitreference_list:
+                        if k[0] == module_data[1]:
+                            capteurs_comma = k[1]
+                            unites_comma = k[2]
+
+                    capteurs = capteurs_comma.split(",")
+                    unites = unites_comma.split(",")
+                    i = 0
+                    for c in capteurs:
+                        capteur = {'Name': c, 'Unit': unites[i], 'PlantReference': str(plant_id)}
+                        self.mysql.insert('/sensoraction', capteur)
+                        i += 1
+                    #on cree un thread pour ecouter sur ce port
+                    threading.Thread(target=serve_on_port, args=[int(module_data[2])]).start()
+                    #envoyer sur le port module_data[2], le numero du port ainsi que le module peut commencer son fonctionnement
+                    # activation : {
+                    #   PortCOM : int(module_data[2]),
+                    #   Activation : OK,
+                    #}
+                    trying_to_connect_module.remove(module_data)
+                else: #si la plante existe deja dans la room, on retourne sur le port de communication, le port de communication originel de la plante
+                    content += ''
+                    #envoyer sur le port de communication int(module_data[2], la valeur du port de communication int(plant_already_exists_in_room[4])
+                    #ainsi que le module peut commencer son fonctionnement
+                    # activation : {
+                    #   PortCOM : int(plant_already_exists_in_room[4]),
+                    #   Activation : OK,
+                    #}
+
 
             user_bdd = self.mysql.select('/user')
             user = get_user(user_bdd, user_t)
             room_list = self.mysql.select('/room')
             user_plant_list = self.mysql.select('/plant')
             home = self.mysql.select('/home')
-            kitreference_list = self.mysql.select('/kitreference')
             reference_plant_list = self.mysql.select('/plantreference')
-
 
             content = construct_option_page(home, user, room_list, user_plant_list, kitreference_list, reference_plant_list, performance, active_room)
             self.send_response(REDIRECTION)
 
         elif "/add_room" in self.path.lower():
-            print( self.path.lower())
             temp = self.rfile.read(int(self.headers['Content-Length']))
             data = dict(urllib.parse.parse_qs(temp.decode('UTF-8')))
 
@@ -1277,6 +1342,63 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             performance = split_path[-1]
             content = construct_option_page(home, user, room_list, user_plant_list, kitreference_list, reference_plant_list, performance, active_room)
             self.send_response(REDIRECTION)
+
+        elif "/kit_connexion" == self.path.lower():
+            #recuperer
+            #temporary_reference
+            #nom_du_kit
+            #{
+            #   Reference : temporary_reference,
+            #   kit_name : nom_du_kit,
+            #}
+            temporary_reference_already_used = False
+            for m in trying_to_connect_module:
+                if m[0] == temporary_reference:
+                    temporary_reference_already_used = True #il y a deja un kit avec la meme reference temporaire qui attend de se connecter
+            kit_id = -1
+            kitreference_list = self.mysql.select('/kitreference')
+            for k in kitreference_list:
+                if k[1] == nom_du_kit:
+                    kit_id = int(k[0])
+            if kit_id == -1: #le nom de kit envoyé par le module n'existe pas
+                #envoyer reponse au client pour lui dire que le nom de kit n'existe pas
+                content += ''
+                # activation : {
+                #   PortCOM : -1,
+                #   Activation : KO,
+                #}
+            elif temporary_reference_already_used: #on envoie au client de générer un nouvel identifiant aléatoire
+                #envoyer reponse au client pour lui demander de regenerer une nouvelle reference aleatoire
+                content += ''
+                # activation : {
+                #   PortCOM : 0,
+                #   Activation : KO,
+                #}
+            else:
+                user_plant_list = self.mysql.select('/plant')
+                portCOM = ''
+                for u in user_plant_list:
+                    portCOM = u[4] #on attribue un port de communication
+                portCOM = str((int(PortCOM) + 10))
+                trying_to_connect_module.append((temporary_reference, str(kit_id), portCOM)) #on ajoute ces donnees en tant que module qui attend une connexion
+                #envoyer reponse au client pour lui dire qu'il doit rester dans l'attente tant que l'utilisateur n'a pas ajoute le module sur son compte
+                #et que son nouveau port de communiction est int(portCOM)
+                # activation : {
+                #   PortCOM : int(portCOM),
+                #   Activation : KO,
+                #}
+
+        elif "/add_measure" == self.path.lower():
+            content += ''
+            #retourner les corrections
+            #correction : {
+            #   ‘wait’: latence,
+            #   'Light' : light,
+            #   'Water' : water,
+            #   'Temperature' : temp,
+            #   'Humidity' : hum,
+            #   'WaterLevel' : waterlev,
+            #}
 
         if content == '': #compte non trouve
             self.send_response(REDIRECTION)
