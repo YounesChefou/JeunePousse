@@ -83,7 +83,7 @@ def get_room_image(room_name):
     f.close()
     return content
 
-def construct_dashboard(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, user_sensor, user_measure, performance, user_active_room):
+def construct_dashboard(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, user_sensor, user_measure, performance, active_room):
     user = user_list
     user_home = home[0]
     user_room = []
@@ -99,13 +99,15 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     for p in room_list:
         if p[2] == user_home[0]:
             user_room.append(p)
-            first_room = p
-    if first_room == room_list[0]:
-        for p in room_list:
-            if p[2] == user_home[0]:
-                first_room = p
-                break
-    active_room = first_room[0]
+    #active_room = user_active_room
+    #active_room = first_room[0]
+    #first_user_room = user_room[0]
+    #user_s_room = False
+    #for a in user_room:
+    #    if a[0] == active_room:
+    #        user_s_room = True
+    #if not user_s_room:
+    #    active_room = user_room[0][0]
     for pl in user_plant_list:
         if int(pl[2]) == int(active_room):
             user_plant.append(pl)
@@ -1284,9 +1286,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     #on cree un thread pour ecouter sur ce port
                     threading.Thread(target=serve_on_port, args=[int(module_data[2])]).start()
                     #envoyer sur le port module_data[2], le numero du port ainsi que le module peut commencer son fonctionnement
-                    obj = activation = {
-                      PortCOM : int(module_data[2]),
-                      Activation : OK,
+                    obj = {'activation' : {
+                      'PortCOM' : int(module_data[2]),
+                      'Activation' : 1,
+                    }
                     }
                     data_type = "json"
                     content += obj
@@ -1296,7 +1299,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     content += ''
                     #envoyer sur le port de communication int(module_data[2], la valeur du port de communication int(plant_already_exists_in_room[4])
                     #ainsi que le module peut commencer son fonctionnement
-                    obj = activation : { PortCOM : int(plant_already_exists_in_room[4]), Activation : OK,}
+                    obj = {'activation' : { 'PortCOM' : int(plant_already_exists_in_room[4]), 'Activation' : 0,}}
                     data_type = "json"
                     content += obj
 
@@ -1350,7 +1353,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             #temporary_reference
             #nom_du_kit
             q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
-			query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+            query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
 
             print(q)
             print(query)
@@ -1372,9 +1375,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 #envoyer reponse au client pour lui dire que le nom de kit n'existe pas
                 # content += ''
                 #TODO
-                obj = activation : {
-                  PortCOM : -1,
-                  Activation : KO,
+                obj = {'activation' : {
+                  'PortCOM' : -1,
+                  'Activation' : 0,
+                }
                 }
                 data_type = "json"
                 content += obj
@@ -1383,9 +1387,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 #envoyer reponse au client pour lui demander de regenerer une nouvelle reference aleatoire
                 content += ''
                 #TODO
-                obj = activation : {
-                  PortCOM : 0,
-                  Activation : KO,
+                obj = {'activation' : {
+                  'PortCOM' : 0,
+                  'Activation' : 0,
+                }
                 }
                 data_type = "json"
                 content += obj
@@ -1399,9 +1404,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 trying_to_connect_module.append((temporary_reference, str(kit_id), portCOM)) #on ajoute ces donnees en tant que module qui attend une connexion
                 #envoyer reponse au client pour lui dire qu'il doit rester dans l'attente tant que l'utilisateur n'a pas ajoute le module sur son compte
                 #et que son nouveau port de communiction est int(portCOM)
-                obj = activation : {
-                  PortCOM : int(portCOM),
-                  Activation : KO,
+                obj = {'activation' : {
+                  'PortCOM' : int(portCOM),
+                  'Activation' : 0,
+                }
                 }
                 data_type = "json"
                 content += obj
@@ -1409,13 +1415,14 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         elif "/add_measure" == self.path.lower():
 
             #retourner les corrections
-            obj = correction : {
-              ‘wait’: latence,
+            obj = {'correction' : {
+              'wait': latence,
               'Light' : light,
               'Water' : water,
               'Temperature' : temp,
               'Humidity' : hum,
               'WaterLevel' : waterlev,
+            }
             }
             data_type = "json"
             content += obj
@@ -1424,10 +1431,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(REDIRECTION)
             self.send_header('Location', '/')
 
-        elif data_type = "json":
+        elif data_type == "json":
             body = content.encode("utf8")
-    	    self.send_header("Content-type", "application/json")
-    	    self.send_header("Content-Length", str(len(body)))
+            self.send_header("Content-type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
 
         else :
     	    body = content.encode("utf8")
