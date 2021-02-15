@@ -989,6 +989,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         global ip_t
         global email_root
         global password_root
+        data_type = ""
 
         content = ''
         res = urllib.parse.urlparse(self.path)
@@ -1283,20 +1284,21 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     #on cree un thread pour ecouter sur ce port
                     threading.Thread(target=serve_on_port, args=[int(module_data[2])]).start()
                     #envoyer sur le port module_data[2], le numero du port ainsi que le module peut commencer son fonctionnement
-                    # activation : {
-                    #   PortCOM : int(module_data[2]),
-                    #   Activation : OK,
-                    #}
+                    obj = activation = {
+                      PortCOM : int(module_data[2]),
+                      Activation : OK,
+                    }
+                    data_type = "json"
+                    content += obj
+                    # requests.post("http://localhost:"+int(module_data[2])+"/", json = activation)
                     trying_to_connect_module.remove(module_data)
                 else: #si la plante existe deja dans la room, on retourne sur le port de communication, le port de communication originel de la plante
                     content += ''
                     #envoyer sur le port de communication int(module_data[2], la valeur du port de communication int(plant_already_exists_in_room[4])
                     #ainsi que le module peut commencer son fonctionnement
-                    # activation : {
-                    #   PortCOM : int(plant_already_exists_in_room[4]),
-                    #   Activation : OK,
-                    #}
-
+                    obj = activation : { PortCOM : int(plant_already_exists_in_room[4]), Activation : OK,}
+                    data_type = "json"
+                    content += obj
 
             user_bdd = self.mysql.select('/user')
             user = get_user(user_bdd, user_t)
@@ -1347,10 +1349,15 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             #recuperer
             #temporary_reference
             #nom_du_kit
-            #{
-            #   Reference : temporary_reference,
-            #   kit_name : nom_du_kit,
-            #}
+            q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+			query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+
+            print(q)
+            print(query)
+            obj = query[''] #TODO
+            temporary_reference = obj['Reference']
+            nom_du_kit = obj['kit_name']
+
             temporary_reference_already_used = False
             for m in trying_to_connect_module:
                 if m[0] == temporary_reference:
@@ -1360,20 +1367,29 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             for k in kitreference_list:
                 if k[1] == nom_du_kit:
                     kit_id = int(k[0])
+
             if kit_id == -1: #le nom de kit envoyé par le module n'existe pas
                 #envoyer reponse au client pour lui dire que le nom de kit n'existe pas
-                content += ''
-                # activation : {
-                #   PortCOM : -1,
-                #   Activation : KO,
-                #}
+                # content += ''
+                #TODO
+                obj = activation : {
+                  PortCOM : -1,
+                  Activation : KO,
+                }
+                data_type = "json"
+                content += obj
+
             elif temporary_reference_already_used: #on envoie au client de générer un nouvel identifiant aléatoire
                 #envoyer reponse au client pour lui demander de regenerer une nouvelle reference aleatoire
                 content += ''
-                # activation : {
-                #   PortCOM : 0,
-                #   Activation : KO,
-                #}
+                #TODO
+                obj = activation : {
+                  PortCOM : 0,
+                  Activation : KO,
+                }
+                data_type = "json"
+                content += obj
+
             else:
                 user_plant_list = self.mysql.select('/plant')
                 portCOM = ''
@@ -1383,26 +1399,36 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 trying_to_connect_module.append((temporary_reference, str(kit_id), portCOM)) #on ajoute ces donnees en tant que module qui attend une connexion
                 #envoyer reponse au client pour lui dire qu'il doit rester dans l'attente tant que l'utilisateur n'a pas ajoute le module sur son compte
                 #et que son nouveau port de communiction est int(portCOM)
-                # activation : {
-                #   PortCOM : int(portCOM),
-                #   Activation : KO,
-                #}
+                obj = activation : {
+                  PortCOM : int(portCOM),
+                  Activation : KO,
+                }
+                data_type = "json"
+                content += obj
 
         elif "/add_measure" == self.path.lower():
-            content += ''
+
             #retourner les corrections
-            #correction : {
-            #   ‘wait’: latence,
-            #   'Light' : light,
-            #   'Water' : water,
-            #   'Temperature' : temp,
-            #   'Humidity' : hum,
-            #   'WaterLevel' : waterlev,
-            #}
+            obj = correction : {
+              ‘wait’: latence,
+              'Light' : light,
+              'Water' : water,
+              'Temperature' : temp,
+              'Humidity' : hum,
+              'WaterLevel' : waterlev,
+            }
+            data_type = "json"
+            content += obj
 
         if content == '': #compte non trouve
             self.send_response(REDIRECTION)
             self.send_header('Location', '/')
+
+        elif data_type = "json":
+            body = content.encode("utf8")
+    	    self.send_header("Content-type", "application/json")
+    	    self.send_header("Content-Length", str(len(body)))
+
         else :
     	    body = content.encode("utf8")
     	    self.send_header("Content-type", "text/html; charset=utf-8")
