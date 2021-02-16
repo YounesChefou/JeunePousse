@@ -1,4 +1,4 @@
-import http.server, urllib.parse, sqlite3, requests, threading,  socketserver, datetime, cgi
+import http.server, urllib.parse, sqlite3, requests, threading,  socketserver, datetime, cgi, random
 from urllib.parse import urlparse
 from math import *
 
@@ -48,11 +48,19 @@ bdd_room_fields = ["", "id", "Name", "Home Reference", "Insertion Date", ""]
 bdd_user_fields = ["id", "Name", "Email", "Password", "Home Reference", "Insertion Date"]
 bdd_plant_fields = ["Name", "Origin", "Temperature", "Humidity", "Luminosity", "GroundQuality"]
 bdd_kit_fields = ["Name", "SensoractionNames", "SensoractionUnits", "Insertion Date"]
+img_dashboard = ['https://www.wallpaperup.com/uploads/wallpapers/2017/04/22/1086857/48df69b50d7601215c6509cb7bd6ab69-1000.jpg'
+    , 'https://www.wallpaperup.com/uploads/wallpapers/2016/06/24/991640/24d24526389da7b23e893cb4cc5a69bc-1000.jpg'
+    , 'https://s2.best-wallpaper.net/wallpaper/1920x1080/1707/Insect-plant-green-blurry_1920x1080.jpg'
+    , 'https://www.wallpaperup.com/uploads/wallpapers/2013/07/21/121843/baaf1f0c61e2e12f49136ea2d01a2e08-1400.jpg'
+    , 'https://www.wallpaperup.com/uploads/wallpapers/2014/04/17/335836/3ee55c99a9d557242d54cc4ac40863d7-1400.jpg']
 
 sensor_type = ["Temperature", "Humidity", "Luminosity", "Ground quality", "Water tank"]
 
-def add_nav_bar(activ_num, id_user, active_room, performance):
-    content = '<nav class="navbar fixed-top navbar-inverse"><div class="container-fluid"><div class="navbar-header"><a class="navbar-brand">Jeune Pousse</a></div><ul class="nav navbar-nav">'
+def add_nav_bar(activ_num, id_user, active_room, performance, fixe):
+    if fixe == 1:
+        content = '<nav class="navbar navbar-inverse navbar-fixed-top"><div class="container-fluid"><div class="navbar-header"><a class="navbar-brand">Jeune Pousse</a></div><ul class="nav navbar-nav">'
+    else:
+        content = '<nav class="navbar navbar-inverse"><div class="container-fluid"><div class="navbar-header"><a class="navbar-brand">Jeune Pousse</a></div><ul class="nav navbar-nav">'
     if activ_num == 1:
         content += '<li class="active"><a href="http://localhost:8888/dashboard/{}/{}/{}">Dashboard</a></li>'.format(str(id_user), str(active_room), str(performance))
     else :
@@ -81,6 +89,105 @@ def get_room_image(room_name):
     f.close()
     return content
 
+def create_one_chart(sensor, chart_name):
+    content = ''
+    content += 'function drawChart{}()'.format(chart_name)
+    content += '{\n'
+    content += 'var chartDiv{} = document.getElementById(\'chart_div{}\');\n'.format(chart_name, chart_name)
+    content += 'var data{} = new google.visualization.DataTable();\n'.format(chart_name)
+    content += 'data{}.addColumn(\'date\', \'Cette semaine\');\n'.format(chart_name)
+    nb_rows = 0
+    for s in sensor: #on definit les axes
+        content += 'data{}.addColumn(\'number\', "{}");\n'.format(s[0], chart_name)
+        if nb_rows == 0:
+            nb_rows = len(s[1])
+    content += 'data{}.addRows([\n'.format(chart_name) #on ajoute les donnees
+    value_by_row = []
+    dates = []
+    for s in sensor:
+        measure = s[1]
+    for i in range(0, nb_rows):
+        j = 0
+        content += '['
+        for s in sensor:
+            measure = s[1] #mesure et date
+            if len(measure) > 0:
+                act = measure[i]
+                val_act = act[0]
+                dat_act = act[1]
+                if j == 0:
+                    content += 'new Date({}, {}, {}, {}, {}),'.format(dat_act[0],str(int(dat_act[1]) - 1) ,dat_act[2],dat_act[3],dat_act[4])
+                    j = 1
+                content += str(val_act)
+                if s != sensor[-2]:
+                    content += ','
+        content += ']'
+        if i != nb_rows - 1:
+            content += ','
+    content += ']\n);\n'
+    content += 'var materialOptions{} = '.format(chart_name)
+    content += '{width: 400,height: 500};\n'
+
+    content += 'var materialChart{} = new google.charts.Line(chartDiv{});\n'.format(chart_name, chart_name)
+    content += 'materialChart{}.draw(data{}, materialOptions{});\n'.format(chart_name, chart_name, chart_name)
+    content += '}'
+    return content
+
+def construct_graph(data, data_legend, data_type, button):
+    year = datetime.datetime.today().year
+    month = datetime.datetime.today().month - 1
+    next_year = year
+    next_month = month + 2
+    if next_month > 11:
+        next_month = next_month - 11
+        next_year = year + 1
+    content = '<script type="text/javascript">'
+    content += 'google.charts.load("current", {packages:["corechart"]});'
+    content += 'google.charts.setOnLoadCallback(drawChart);'
+    content += 'function drawChart() {'
+    content += 'var data = new google.visualization.DataTable();'
+    content += 'data.addColumn(\'datetime\', \'Temps\');'
+    content += 'data.addColumn(\'number\', \'{}({})\');'.format(data_legend, data_type)
+    content += 'data.addRows(['
+    for d in data:
+        value = d[0]
+        date = d[1]
+        content += '[new Date({}, {}, {}, {}), {}],'.format(date[0], date[1], date[2], date[3], value)
+    content += ']);'
+    content += 'var options = {width: 900,height: 500,legend: {position: \'none\'},enableInteractivity: false,chartArea: {width: \'85%\'},'
+    content += 'hAxis: {viewWindow: {min: new Date('
+    content += str(year - 5)
+    content += ', 0, 0),max: new Date('
+    content += str(year + 1)
+    content += ', 11, 31)},'
+    content += 'gridlines: {count: -1,units: {days: {format: [\'MMM dd\']},hours: {format: [\'HH:mm\', \'ha\']},}},'
+    content += 'minorGridlines: {units: {hours: {format: [\'hh:mm:ss a\', \'ha\']},minutes: {format: [\'HH:mm a Z\', \':mm\']}'
+    content += '}}}};'
+    content += 'var chart = new google.visualization.LineChart(document.getElementById(\'{}\'));'.format(data_legend)
+    content += 'chart.draw(data, options);var button = document.getElementById(\'{}\');var isChanged = false;'.format(button)
+    content += 'button.onclick = function () {if (!isChanged) {options.hAxis.viewWindow.min = new Date('
+    content += str(year)
+    content += ','
+    content += str(month)
+    content += ', 1);'
+    content += 'options.hAxis.viewWindow.max = new Date('
+    content += str(next_year)
+    content += ','
+    content += str(next_month)
+    content += ', 28);'
+    content += 'isChanged = true;'
+    content += '} else {'
+    content += 'options.hAxis.viewWindow.min = new Date('
+    content += str(year - 5)
+    content += ', 0, 1);'
+    content += 'options.hAxis.viewWindow.max = new Date('
+    content += str(year + 1)
+    content += ', 11, 31);'
+    content += 'isChanged = false;'
+    content += '}chart.draw(data, options);};}</script>'
+    return content
+
+
 def construct_dashboard(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, user_sensor, user_measure, performance, active_room):
     user = user_list
     user_home = home[0]
@@ -97,19 +204,12 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     for p in room_list:
         if p[2] == user_home[0]:
             user_room.append(p)
-            if p[0] == active_room:
+            if int(p[0]) == int(active_room):
                 is_active_room_user_s = True
+    first_room = user_room[0]
     if not is_active_room_user_s:
-        active_room = user_room[0][0]
-    #active_room = user_active_room
-    #active_room = first_room[0]
-    #first_user_room = user_room[0]
-    #user_s_room = False
-    #for a in user_room:
-    #    if a[0] == active_room:
-    #        user_s_room = True
-    #if not user_s_room:
-    #    active_room = user_room[0][0]
+        print("not in room")
+        active_room = first_room[0]
     for pl in user_plant_list:
         if int(pl[2]) == int(active_room):
             user_plant.append(pl)
@@ -119,8 +219,31 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     f = open('site/header_dashboard.html', 'r')
     content = f.read()
     f.close()
+    #on extrait les mesures
+    for p in user_plant:
+      colo = 0
+      sensor = []
+      unite = []
+      data = []
+      for s in user_sensor:
+          if s[3] == p[0]:
+              value = []
+              i = 50
+              print(user_measure)
+              for m in reversed(user_measure):
+                  if m[2] == s[0]:
+                      if i > 0:
+                          print("MESUREEEE")
+                          value.append((m[1], convert_time(m[3])))
+                          i -= 1
+              sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
+
+    #content += create_one_chart(sensor, str(p[0]))
+    #f = open('site/end_header_dashboard.html', 'r')
+    #content += f.read()
+    #f.close()
     content += html_body
-    content += add_nav_bar(1, user[0], active_room, performance) #ajout de la navbar
+    content += add_nav_bar(1, user[0], active_room, performance, 1) #ajout de la navbar
 
     content += '<div class="sidebar">'
 
@@ -128,14 +251,28 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     content += '<legend><h3 style="color: white;">Mes pièces</h3></legend>'
     content += '</div>'
     i = 1
+    nom_room_active = ''
     for r in user_room:
-        if int(active_room) == i:
-            content += '<a href="http://localhost:8888/dashboard/{}/{}/{}" class="active" >{}</a>'.format(str(user[0]), str(i), str(performance), r[1])
+        if int(active_room) == int(r[0]):
+            content += '<a href="http://localhost:8888/dashboard/{}/{}/{}" class="active" >{}</a>'.format(str(user[0]), str((r[0])), str(performance), r[1])
+            nom_room_active = r[1]
         else:
-            content += '<a href="http://localhost:8888/dashboard/{}/{}/{}">{}</a>'.format(str(user[0]), str(i), str(performance), r[1])
+            content += '<a href="http://localhost:8888/dashboard/{}/{}/{}">{}</a>'.format(str(user[0]), str((r[0])), str(performance), r[1])
         i += 1
     content += '</div>'
+
     content += '<div class="main container-fluid">'
+    #content += '<div class="col-sm-2">' #colonne vide
+
+    content += '<div class="col-sm-12" style="background-color:#E1D5C8;">'#debut colonne donnees
+    url = random.choice(img_dashboard)
+    color = 'white'
+    #if url == img_dashboard[3]:
+    #    color = '#93A6C5'
+    content += '<div class="row text-center" style="background-image:url(\'{}\'); background-repeat:no-repeat;background-size:cover;">'.format(url)
+    content += '<h1 class="sticky" style="color:{};"><b><br>Mon dashboard de<br>{}</b></h1>'.format(color, nom_room_active)
+    content += '<h1><br><br><br><br><br><br><br><br><br><br><br></h1>'
+    content += '</div>'
     for p in user_plant:
         good = 0
         nom = ''
@@ -160,39 +297,48 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
                     if m[2] == s[0]:
                         value = m
                 sensor.append((s[1], value[1], s[2], value[-1])) #nom du capteur, valeur, unite, date de la mesure
-        content += '<div class="row">' #ligne dans le vide
-        content += '<h3><br></h3>'
-        content += '</div>'
+        #content += '<div class="row">' #debut ligne => plante
+        #content += '<img src="{}" class="img-fluid" alt="Responsive image" >'.format(img_dashboard) #width="40" height="40"
+        #content += '</div>'
+        content += '<div class="row" style="background-color:#E1D5C8;">' #debut ligne => plante
 
-        content += '<div class="row">' #debut ligne => plante
-        content += '<div class="col-sm-1">' #colonne vide
-        content += '</div>'#fin colonne vide
-        content += '<div class="col-sm-11" style="background-color:#E1D5C8;">'#debut colonne donnees
-        content += '<div class="row text-left">' #debut ligne nom plante
-        content += ''
-        content += '<div class="col-sm-8"><ul><h2 style="color:#7386D5;">Données de ma plante : <b>{}</b></h2></div></ul>'.format(nom)
-        content += '<div class="col-sm-4"><h2 style="color:#7386D5;">'
+        content += '<div class="row text-left" >' #debut ligne nom plante
+        content += '<div class="col-sm-6"><ul><h2 style="color:#7386D5;">Données de ma plante : <b>{}</b></h2></div></ul>'.format(nom)
+        content += '<div class="col-sm-3"><h2 class="text-center" style="color:#7386D5;">'
         content += '<svg onclick="display_graph{}() "'.format(p[0])
         content += ' xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-line-fill" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2z"/></svg>'
         content += ' '
         content += icone_question
         content += '</h2></div>'
-        content += '</div>' #fin ligne nom plante
-        content += '<legend><p></p></legend>'
-        content += '<div class="row text-left">' #debut ligne donnees plante
-        content += '<div class="col-sm-8">' #debut ligne donnees brutes
+        content += '<div class="col-sm-3">'
+        maj = ''
+        for s in sensor:
+            maj = s[3]
+        content += '<p class="text-center"><br>Dernière mise à jour {}</p>'.format(maj)
+        content += '</div>'
+        content += '</div>'
+        content += '<legend>'
+        content += '</legend>' #fin ligne nom plante
+
+        #content += '<legend style="background-color:#E1D5C8;"><p></p></legend>'
+        #content += '<div class="row text-left">' #debut ligne donnees plante
+        content += '<div class="col-sm-9" >' #debut ligne donnees brutes
         i = 0
         for s in sensor:
             if i == 0:
-                content += '<div class= "row text-left">'
-            content += '<h3>{}</h3><h4> {}{}</h4><p class="text-right">Dernière mise à jour {}</p>'.format(s[0], s[1], s[2], s[3])
+                content += '<div class= "row text-center">'
+            content += '<div class="col-sm-5">'
+            name = s[0]
+            if name == 'GroundQuality':
+                name = 'Soil humidity'
+            content += '<h3>{}</h3><h4> {} {}</h4>'.format(name, s[1], s[2])
+            content += '</div>'
             i += 1
             if i == 2:
                 content += '</div>'
                 i = 0
+        #content += '</ul>'
         content += '</div>'#fin ligne donnees brutes
-        content += '<div class="col-sm-1">'
-        content += '</div>'
         content += '<div class="col-sm-3" style="background-color:white;">' #debut colonne plante reference
         content += '<div class="row text-left">'
         content += '<div class="col-sm-8">'
@@ -203,144 +349,63 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
         content += '</div>'
         content += '</div>'
         content += '<div class="row text-left">'
-        content += '<div class="col-sm-2">'
+        content += '<div class="col-sm-6">'
         f = open('site/pictures/temperature.txt')
         url = f.read()
         f.close()
-        content += '<img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">'.format(url)
+        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}°C</h4>'.format(url, str(temperature))
+        #content += '</div>'
+        #content += '<div class="col-sm-2">'
+        #content += '<h4 style="color:#7386D5;">{}°C</h4>'.format(str(temperature))
         content += '</div>'
-        content += '<div class="col-sm-2">'
-        content += '<h4 style="color:#7386D5;">{}°C</h4>'.format(str(temperature))
-        content += '</div>'
-        content += '<div class="col-sm-1">'
-        content += '</div>'
-        content += '<div class="col-sm-2">'
+        #content += '<div class="col-sm-1">'
+        content += '<div class="col-sm-6">'
         f = open('site/pictures/humidity.txt')
         url = f.read()
         f.close()
-        content += '<img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">'.format(url)
-        content += '</div>'
-        content += '<div class="col-sm-2">'
-        content += '<h4 style="color:#7386D5;">{}%</h4>'.format(str(humidity))
+        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}%</h4>'.format(url, str(humidity))
         content += '</div>'
         content += '</div>'
+        #content += '<div class="col-sm-2">'
+        #content += '<h4 style="color:#7386D5;">{}%</h4>'.format(str(humidity))
+        #content += '</div>'
+        #content += '</div>'
         content += '<div class="row text-left">'
-        content += '<div class="col-sm-2">'
+        content += '<div class="col-sm-6">'
         f = open('site/pictures/luminosity.txt')
         url = f.read()
         f.close()
-        content += '<img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">'.format(url)
+        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}L</h4>'.format(url, str(luminosity))
         content += '</div>'
-        content += '<div class="col-sm-2">'
-        content += '<h4 style="color:#7386D5;">{}L</h4>'.format(str(luminosity))
-        content += '</div>'
-        content += '<div class="col-sm-1">'
-        content += '</div>'
-        content += '<div class="col-sm-2">'
+        content += '<div class="col-sm-6">'
         f = open('site/pictures/qualite_sol.txt')
         url = f.read()
         f.close()
-        content += '<img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">'.format(url)
-        content += '</div>'
-        content += '<div class="col-sm-2">'
-        content += '<h4 style="color:#7386D5;">{}%</h4>'.format(str(groundquality))
+        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}%</h4>'.format(url, str(groundquality))
         content += '</div>'
         content += '</div>' #fin colonne plante reference
-        content += '<div class="row" style="background-color:#E1D5C8;"><h3></h3></div>'
+        content += '<div class="row" style="background-color:#E1D5C8;"><div class="col-sm-12" style="background-color:#E1D5C8;"><h3></h3></div></div>'
         content += '</div>'#fin ligne donnees plante
         content += '</div>'#fin colonne donnees
         content += '<div class="row" id="graph{}" style="background-color:#F5CB9E;display: none;">'.format(p[0]) #debut graphe
-        content += '<canvas class="my-4 w-100" id="chart{}"></canvas>'.format(p[0])
+        content += '<canvas class="my-4 w-100" id="chart_div{}"></canvas>'.format(p[0])
         content += '</div>' #fin graphe
-        content += '</div>'#fin ligne => plante
+        #content += '</div>'#fin ligne => plante
+        content += '<div class="row" style="background-color:#fafafa;">'
+        content += '<h3><br></h3>'
         content += '</div>'
-
+    content += '</div>'
     content += '</div>'
 
-    content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>'
-    content += '\n<script> \nvar timeFormat = \'YYYY-MM-DDTHH:mm\';'
-    #f = open('graph.txt', 'r')
-    #content += f.read()
-    #f.close()
-
+    content += '<script>'
     for p in user_plant:
-        content += '\nvar ctx{} = document.getElementById("chart{}");'.format(p[0], p[0])
-    for p in user_plant:
-        colo = 0
-        sensor = []
-        unite = []
-        for s in user_sensor:
-            if s[3] == p[0]:
-                value = []
-                i = 50
-                for m in reversed(user_measure):
-                    if m[2] == s[0]:
-                        if i > 0:
-                            value.append((m[1], convert_time(m[3])))
-                            i -= 1
-                sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
-        content += '\nvar new_chart{} = new Chart(ctx{}, '.format(p[0], p[0])
-        content += '{ type: \'line\', data:'
-        content += '{ labels: ['
-        measures = []
-        for s in sensor:
-            measures = s[1]
-        for m in reversed(measures):
-            date = m[1]
-            content += '"{}-{}-{}T{}:{}"'.format(str(date[0]), str(date[1]), str(date[2]), str(date[3]), str(date[4]))
-            if m != measures[0]:
-                content += ', '
-        content += '], datasets: [\n'
-        for s in sensor:
-            measures = s[1]
-            content += '\t\t{label:'
-            content += '"{}", data: [\n'.format(s[0]) #nom de la donnee
-            content += '{'
-            for m in reversed(measures): #pour les mesures
-                value = m[0]
-                date = m[1]
-                #content += '{ x: '
-                content += '"{}-{}-{}T{}:{}"'.format(str(date[0]), str(date[1]), str(date[2]), str(date[3]), str(date[4]))
-                #content += ', y: {}'.format(value)
-                if m != measures[0]:
-                    content += ',\n'
-            content += '}'
-            if s != sensor[-1]:
-                content += ', '
-            if s[2] not in unite:
-                unite.append(s[2])
-            content += '\n], fill: false, borderWidth: 4, lineTension: 0, borderColor:\'{}\', pointBackgroundColor: \'{}\', yAxisID: \'{}\''.format(colors[colo], colors[colo], s[2])
-            content += '}'
-            colo += 1
-            if s != sensor[-1]:
-                content += ', \n'
-        content += ']}, \n' #ferme datasets et data
-        content += 'options: {scales: { \nxAxes: [ {type: "time", time: {format: timeFormat}, scaleLabel: {display: true,labelString: \'Date\'}}],'
-        content += '\nyAxes: ['
-        k = 0
-        for u in unite:
-            content += '{ id: '
-            content += '\'{}\'\n, type: \'linear\', \n'.format(u)
-            if k == 0:
-                content += 'position: \'left\', \n'
-            else :
-                content += 'position: \'right\', \n'
-                k = 0
-            k += 1
-            content += 'tricks: {beginAtZero: false}'
-            content += '}\n'
-            if u != unite[-1]:
-                content += ', '
-        content += ']}\n, legend: {display: true,}\n' #ferme yAxes et scales
-        content += '}});' #ferme options { devant type et ferme fonction
-
-
-    for p in user_plant:
-        content += 'function display_graph{}() '.format(p[0])
-        content += ' {var x = document.getElementById("graph'
-        content += '{}");'.format(p[0])
-        content += 'if (x.style.display === "none") {x.style.display = "block";} else {x.style.display = "none";}}'
+      content += 'function display_graph{}() '.format(p[0])
+      content += ' {var x = document.getElementById("graph'
+      content += '{}");'.format(p[0])
+      content += 'if (x.style.display === "none") {x.style.display = "block";} else {x.style.display = "none";}}'
     content += '</script>'
+
+
 
     content += html_end
 
@@ -392,7 +457,7 @@ def construct_option_page(home, user_list, room_list, user_plant_list, kitrefere
     content = f.read()
     f.close()
     content += html_body
-    content += add_nav_bar(2, user[0], active_room, performance) #ajout de la navbar
+    content += add_nav_bar(2, user[0], active_room, performance, 0) #ajout de la navbar
     content += '<div id="div_img"></div>'
     content += '<div class="col-sm-12">'
     content += '<div class="row content">'
