@@ -2,8 +2,6 @@ import http.server, urllib.parse, sqlite3, requests, threading,  socketserver, d
 from urllib.parse import urlparse
 from math import *
 
-trying_to_connect_module = [] #liste d'attente des modules
-
 email_root = "root@root.root"
 password_root = "root@root.root"
 
@@ -93,12 +91,16 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
 
     for h in home:
         if h[0] == user[4]:
-            print(h)
             user_home = h
     first_room = room_list[0]
+    is_active_room_user_s = False
     for p in room_list:
         if p[2] == user_home[0]:
             user_room.append(p)
+            if p[0] == active_room:
+                is_active_room_user_s = True
+    if not is_active_room_user_s:
+        active_room = user_room[0][0]
     #active_room = user_active_room
     #active_room = first_room[0]
     #first_user_room = user_room[0]
@@ -126,11 +128,9 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     content += '<legend><h3 style="color: white;">Mes pièces</h3></legend>'
     content += '</div>'
     i = 1
-    active_room_id = 0
     for r in user_room:
         if int(active_room) == i:
             content += '<a href="http://localhost:8888/dashboard/{}/{}/{}" class="active" >{}</a>'.format(str(user[0]), str(i), str(performance), r[1])
-            active_room_id = r[0]
         else:
             content += '<a href="http://localhost:8888/dashboard/{}/{}/{}">{}</a>'.format(str(user[0]), str(i), str(performance), r[1])
         i += 1
@@ -257,14 +257,14 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
 
     content += '</div>'
 
-    content += '<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js\"></script>'
-    content += '<script> var timeFormat = \'YYYY-MM-DDTHH:mm\';'
+    content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>'
+    content += '\n<script> \nvar timeFormat = \'YYYY-MM-DDTHH:mm\';'
     #f = open('graph.txt', 'r')
     #content += f.read()
     #f.close()
 
     for p in user_plant:
-        content += 'var ctx{} = document.getElementById("chart{}");'.format(p[0], p[0])
+        content += '\nvar ctx{} = document.getElementById("chart{}");'.format(p[0], p[0])
     for p in user_plant:
         colo = 0
         sensor = []
@@ -276,49 +276,62 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
                 for m in reversed(user_measure):
                     if m[2] == s[0]:
                         if i > 0:
-                            value.append(m[1], convert_time(m[3]))
+                            value.append((m[1], convert_time(m[3])))
                             i -= 1
-                sensor.append(s[1], value) #nom du capteur, liste (valeurs, dateinsertion)
-        content += 'var new_chart{} = new Chart(ctx{}, '.format(p[0], p[0])
-        content += '{ type: \'timeline\', data: { datasets: ['
+                sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
+        content += '\nvar new_chart{} = new Chart(ctx{}, '.format(p[0], p[0])
+        content += '{ type: \'line\', data:'
+        content += '{ labels: ['
+        measures = []
         for s in sensor:
-            content += '{label:'
-            content += '"{}", data: ['.format(s[0]) #nom de la donnee
             measures = s[1]
+        for m in reversed(measures):
+            date = m[1]
+            content += '"{}-{}-{}T{}:{}"'.format(str(date[0]), str(date[1]), str(date[2]), str(date[3]), str(date[4]))
+            if m != measures[0]:
+                content += ', '
+        content += '], datasets: [\n'
+        for s in sensor:
+            measures = s[1]
+            content += '\t\t{label:'
+            content += '"{}", data: [\n'.format(s[0]) #nom de la donnee
+            content += '{'
             for m in reversed(measures): #pour les mesures
                 value = m[0]
                 date = m[1]
-                content += '{ x: '
+                #content += '{ x: '
                 content += '"{}-{}-{}T{}:{}"'.format(str(date[0]), str(date[1]), str(date[2]), str(date[3]), str(date[4]))
-                content += ', y: {}'.format(value)
-                content += '}'
-                if m != measures[-1]:
-                    content += ','
+                #content += ', y: {}'.format(value)
+                if m != measures[0]:
+                    content += ',\n'
+            content += '}'
+            if s != sensor[-1]:
+                content += ', '
             if s[2] not in unite:
                 unite.append(s[2])
-            content += '], fill: false, borderWidth: 4, lineTension: 0, borderColor:\'{}\', pointBackgroundColor: \'{}\', yAxisID: \'{}\''.format(colors[colo], colors[colo], s[2])
+            content += '\n], fill: false, borderWidth: 4, lineTension: 0, borderColor:\'{}\', pointBackgroundColor: \'{}\', yAxisID: \'{}\''.format(colors[colo], colors[colo], s[2])
             content += '}'
             colo += 1
             if s != sensor[-1]:
-                content += ', '
-        content += ']}, ' #ferme datasets et data
-        content += 'options: { responsive: true, scales: { xAxes: [ {type: "time", time: {format: timeFormat}, scaleLabel: {display: true,labelString: \'Date\'}}],'
-        content += 'yAxes: ['
+                content += ', \n'
+        content += ']}, \n' #ferme datasets et data
+        content += 'options: {scales: { \nxAxes: [ {type: "time", time: {format: timeFormat}, scaleLabel: {display: true,labelString: \'Date\'}}],'
+        content += '\nyAxes: ['
         k = 0
         for u in unite:
             content += '{ id: '
-            content += '\'{}\', type: \'linear\', '.format(u)
+            content += '\'{}\'\n, type: \'linear\', \n'.format(u)
             if k == 0:
-                content += 'position: \'left\', '
+                content += 'position: \'left\', \n'
             else :
-                content += 'position: \'right\', '
+                content += 'position: \'right\', \n'
                 k = 0
             k += 1
             content += 'tricks: {beginAtZero: false}'
-            content += '}'
+            content += '}\n'
             if u != unite[-1]:
                 content += ', '
-        content += ']}, legend: {display: true,}' #ferme yAxes et scales
+        content += ']}\n, legend: {display: true,}\n' #ferme yAxes et scales
         content += '}});' #ferme options { devant type et ferme fonction
 
 
@@ -671,11 +684,6 @@ def create_account_add_rooms():
     f = open('site/header_create_account.html', 'r')
     content = f.read()
     f.close()
-
-#room_img = '\n<div class="container-fluid text-center" id="mve"">\n<div class="row content">\n<div id="icone" class="col-sm-2 sidenav">\n<img src="'
-#room_body = '" alt="" class="img-responsive img-center">\n</div>\n<div id="liste" class="col-sm-8 text-left">\n<h1 id="texte_liste">     '
-#room_body_inter = '</div>\n</div>\n</div>'
-
 
     content += '<div class="col-sm-12">'
     content += '<h1 class="h3 mb-3 font-weight-normal">Indiquez les pièces du logement</h1>'
@@ -1211,20 +1219,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 if int(r[2]) == int(HomeReference):
                     for p in user_plant_list:
                         if p[2] == r[0]:
-                            #envoyer requete a client pour lui dire mode
-                            if int(performance) == 1: #performance activee
-                                delay = 60000 #ms = 1min
-                            else: #performance desactivee => mode vacances
-                                delay = 300000 #ms = 5min
-                                #on confie au kit la gestion
-                                for p_r in reference_plant_list:
-                                    if p[1] == p_r[0]:
-                                        temperature = p_r[3]
-                                        humidity = p_r[4]
-                                        luminosity = p_r[5]
-                                        groundquality = p_r[6]
-                            #port sur lequel envoyer la requete
-                            #int(p[4])
+                            self.mysql.update("plant", "Performance", performance, str(p[0]) ) #on met a jour le mode
 
             home = self.mysql.select('/home')
             kitreference_list = self.mysql.select('/kitreference')
@@ -1247,61 +1242,12 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             module_reference = "{}".format(data.get('module_reference')[0])
             plant_id = "{}".format(data.get('plant_id')[0])
 
-            waiting_module = False
-            module_data = trying_to_connect_module[0]
-
-            for m in trying_to_connect_module:
-                if m[0] == module_reference: #il s'agit d'un module en attente
-                    waiting_module = True
-                    module_data = m[0]
-            kitreference_list = self.mysql.select('/kitreference')
-
-            if waiting_module: #on a un module en attente de connexion qui a cette reference temporaire de produit
-                #on ajoute le module dans la bdd si elle n'existe pas
-                plant = {'PlantReference': plant_id, 'RoomReference': room_id, 'KitReference': module_data[1], 'PortCOM': module_data[2], 'ReferenceProductNumber': module_reference}
-                user_plant_list = self.mysql.select('/plant')
-                not_in_room = True
-                plant_already_exists_in_room = user_plant_list[0]
-                for p in user_plant_list:
-                    if (int(p[1] == int(plant_id)) & int(p[2]) == int(room_id) & int(p[3]) == int(module_data[1])):
-                        not_in_room = False
-                        plant_already_exists_in_room = p
-                if not_in_room:
-                    self.mysql.insert('/plant', plant)
-                    user_plant_list = self.mysql.select('/plant')
-                    plant_id = len(user_plant_list)
-                    #on ajouter les capteurs lies au module dans la bdd
-                    for k in kitreference_list:
-                        if k[0] == module_data[1]:
-                            capteurs_comma = k[1]
-                            unites_comma = k[2]
-
-                    capteurs = capteurs_comma.split(",")
-                    unites = unites_comma.split(",")
-                    i = 0
-                    for c in capteurs:
-                        capteur = {'Name': c, 'Unit': unites[i], 'PlantReference': str(plant_id)}
-                        self.mysql.insert('/sensoraction', capteur)
-                        i += 1
-                    #on cree un thread pour ecouter sur ce port
-                    threading.Thread(target=serve_on_port, args=[int(module_data[2])]).start()
-                    #envoyer sur le port module_data[2], le numero du port ainsi que le module peut commencer son fonctionnement
-                    obj = {'activation' : {
-                      'PortCOM' : int(module_data[2]),
-                      'Activation' : 1,
-                    }
-                    }
-                    data_type = "json"
-                    content += obj
-                    # requests.post("http://localhost:"+int(module_data[2])+"/", json = activation)
-                    trying_to_connect_module.remove(module_data)
-                else: #si la plante existe deja dans la room, on retourne sur le port de communication, le port de communication originel de la plante
-                    content += ''
-                    #envoyer sur le port de communication int(module_data[2], la valeur du port de communication int(plant_already_exists_in_room[4])
-                    #ainsi que le module peut commencer son fonctionnement
-                    obj = {'activation' : { 'PortCOM' : int(plant_already_exists_in_room[4]), 'Activation' : 0,}}
-                    data_type = "json"
-                    content += obj
+            user_plant_list = self.mysql.select('/plant')
+            for p in user_plant_list:
+                if p[5] == module_reference: #reference du module
+                    update(nom_table, nom_colonne, valeur, condition_value)
+                    self.mysql.update("plant", "PlantReference", str(plant_id), str(p[0]) )
+                    self.mysql.update("plant", "RoomReference", str(room_id), str(p[0]) )
 
             user_bdd = self.mysql.select('/user')
             user = get_user(user_bdd, user_t)
@@ -1361,71 +1307,164 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             temporary_reference = obj['Reference']
             nom_du_kit = obj['kit_name']
 
-            temporary_reference_already_used = False
-            for m in trying_to_connect_module:
-                if m[0] == temporary_reference:
-                    temporary_reference_already_used = True #il y a deja un kit avec la meme reference temporaire qui attend de se connecter
-            kit_id = -1
-            kitreference_list = self.mysql.select('/kitreference')
-            for k in kitreference_list:
-                if k[1] == nom_du_kit:
-                    kit_id = int(k[0])
+            user_plant_list = self.mysql.select('/plant')
 
-            if kit_id == -1: #le nom de kit envoyé par le module n'existe pas
-                #envoyer reponse au client pour lui dire que le nom de kit n'existe pas
-                # content += ''
-                #TODO
-                obj = {'activation' : {
-                  'PortCOM' : -1,
-                  'Activation' : 0,
-                }
-                }
-                data_type = "json"
-                content += obj
+            already_in_database = False
+            portCOM = 0
+            capteurs = []
+            for p in user_plant_list:
+                if p[5] == temporary_reference:
+                    portCOM = int(p[4])
+            if portCOM == 0 :
+                portCOM = int(user_plant_list[-1][4]) + 10
+                kitreference_list = self.mysql.select('/kitreference')
+                correct_kit_name = False
+                for k in kitreference_list:
+                    if k[1] == nom_du_kit:
+                        correct_kit_name = True
+                if correct_kit_name:
+                    plant = {'PlantReference': '-1', 'RoomReference': '-1', 'KitReference': nom_du_kit, 'PortCOM': str(portCOM), 'ReferenceProductNumber': temporary_reference, 'Performance': '-1'}
+                    self.mysql.insert('/plant', plant)
+                    plant_id = len(self.mysql.select('/plant'))
 
-            elif temporary_reference_already_used: #on envoie au client de générer un nouvel identifiant aléatoire
-                #envoyer reponse au client pour lui demander de regenerer une nouvelle reference aleatoire
-                content += ''
-                #TODO
-                obj = {'activation' : {
-                  'PortCOM' : 0,
-                  'Activation' : 0,
-                }
-                }
-                data_type = "json"
-                content += obj
+                    kitreference_list = self.mysql.select('/kitreference')
 
-            else:
-                user_plant_list = self.mysql.select('/plant')
-                portCOM = ''
-                for u in user_plant_list:
-                    portCOM = u[4] #on attribue un port de communication
-                portCOM = str((int(PortCOM) + 10))
-                trying_to_connect_module.append((temporary_reference, str(kit_id), portCOM)) #on ajoute ces donnees en tant que module qui attend une connexion
-                #envoyer reponse au client pour lui dire qu'il doit rester dans l'attente tant que l'utilisateur n'a pas ajoute le module sur son compte
-                #et que son nouveau port de communiction est int(portCOM)
-                obj = {'activation' : {
-                  'PortCOM' : int(portCOM),
-                  'Activation' : 0,
-                }
-                }
-                data_type = "json"
-                content += obj
+                    for k in kitreference_list:
+                        if k[0] == p[3]: #kit de la plante
+                            capteurs_comma = k[1]
+                            unites_comma = k[2]
+                            #on retire les virgules
+                            capteurs = capteurs_comma.split(",")
+                            unites = unites_comma.split(",")
+                            #on cree les capteurs
+                            i = 0
+                            for c in capteurs:
+                                capteur = {'Name': c, 'Unit': unites[i], 'PlantReference': str(plant_id)}
+                                self.mysql.insert('/sensoraction', capteur)
+                                i += 1
+                            #on cree un thread pour ecouter sur ce port
+                            threading.Thread(target=serve_on_port, args=[portCOM]).start()
+
+                else :
+                    portCOM = -1
+            obj = { 'PortCOM' : str(portCOM) }
+            data_type = "json"
+            content = obj
+
 
         elif "/add_measure" == self.path.lower():
+            q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+            query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
 
-            #retourner les corrections
-            obj = {'correction' : {
-              'wait': latence,
-              'Light' : light,
-              'Water' : water,
-              'Temperature' : temp,
-              'Humidity' : hum,
-              'WaterLevel' : waterlev,
-            }
-            }
+            obj = query[''] #TODO
+            Reference = obj['Reference']
+            Temperature = obj['Temperature']
+            Humidity = obj['Humidity']
+            Luminosity = obj['Luminosity']
+            GroundQuality = obj['GroundQuality']
+            WaterLevel = obj['WaterLevel']
+            Light = obj['Light']
+
+            plants = self.mysql.select('/plant')
+            reference_plant_list = self.mysql.select('/plantreference')
+            sensors = self.mysql.select('/sensoraction')
+            for p in plants:
+                if p[-3] == Reference: #on a trouve la plante
+                   performance = p[-2]
+                   temperature_ref = 0.0
+                   humidity_ref = 0.0
+                   luminosity_ref = 0.0
+                   groundquality_ref = 0.0
+                   light_ref = 0
+                   water_level_ref = 1
+                   irrigation_score = 0
+                   for p_r in reference_plant_list:
+                    if p[1] == p_r[0]:
+                          temperature_ref = float(p_r[3])
+                          humidity_ref = float(p_r[4])
+                          luminosity_ref = float(p_r[5])
+                          groundquality_ref = float(p_r[6])
+                   if (performance == '1') | (performance == '-1'): #mode performance
+                    delay = 30000 #ms = 30s
+                    ratio_temp = float(Temperature) / temperature_ref
+                    if ( ratio_temp < 0.8 ): #trop froid
+                        temperature_ref = -1
+                    elif ratio_temp > 1.2 : #trop chaud
+                        temperature_ref = 1
+                    else :
+                        temperature_ref = 0 #bonne temperature
+                    ratio_hum = float(Humidity) / humidity_ref
+                    if ratio_hum < 0.85: #trop sec
+                        humidity_ref = -1
+                        irrigation_score = 1
+                        if ratio_hum < 0.5:
+                            irrigation_score += 1
+                    elif ratio_hum > 1.25 : #trop humide
+                        humidity_ref = 1
+                    else :
+                        humidity_ref = 0 #bonne humiditee
+                    ratio_hum_sol = float(GroundQuality) / groundquality_ref
+                    if ratio_hum_sol < 0.7: #sol trop sec
+                        groundquality_ref = -1
+                        irrigation_score += 1
+                        if ratio_hum < 0.6:
+                            irrigation_score += 1
+                            if ratio_hum < 0.3:
+                                irrigation_score += 1
+                    elif ratio_hum_sol > 1.5 : #sol trop humide
+                        groundquality_ref = 1
+                    else :
+                        groundquality_ref = 0 #bonne humiditee du sol
+                    luminosity_ref = Luminosity - luminosity_ref
+                    if luminosity_ref < 0: #lumiere deja bien
+                        luminosity_ref = 0
+                        light_ref = 0
+                    else :
+                        luminosity_ref = -1 #pas assez de lumiere
+                        light_ref = 100 * Luminosity / luminosity_ref
+                        if light_ref > 100:
+                            light_ref = 100
+                    if WaterLevel < 20:
+                        water_level_ref = 0 #attention, surveiller le niveau d'eau
+                    elif WaterLevel < 5:
+                        water_level_ref = -1 #urgent, rservoir quasi vide
+                   else : #mode vacance
+                    delay = 60000 #ms = 1min
+                   obj = {
+                    'mode' : int(performance), #1 performance, 0 vacances
+                    'delay' : delay,
+                    'temp_indicator': temperature_ref,
+                    'hum_indicator': humidity_ref,
+                    'lum_indicator': luminosity_ref,
+                    'grnd_indicator': groundquality_ref,
+                    'water_indicator': water_level_ref,
+                    'light_power': light_ref,
+                    'irrig_score': irrigation_score
+                   }
+                   #on ajoute les mesures dans la bdd
+                   for s in sensors:
+                       if s[3] == p[0]:
+                           if s[1] == 'Temperature':
+                               mesure = {'Value': str(Temperature), 'SensoractionReference': str(s[0])}
+                               self.mysql.insert('/measure', mesure)
+                           if s[1] == 'Humidity':
+                               mesure = {'Value': str(Humidity), 'SensoractionReference': str(s[0])}
+                               self.mysql.insert('/measure', mesure)
+                           if s[1] == 'Luminosity':
+                               mesure = {'Value': str(Luminosity), 'SensoractionReference': str(s[0])}
+                               self.mysql.insert('/measure', mesure)
+                           if s[1] == 'GroundQuality':
+                               mesure = {'Value': str(GroundQuality), 'SensoractionReference': str(s[0])}
+                               self.mysql.insert('/measure', mesure)
+                           if s[1] == 'WaterLevel':
+                               mesure = {'Value': str(WaterLevel), 'SensoractionReference': str(s[0])}
+                               self.mysql.insert('/measure', mesure)
+                           if s[1] == 'Light':
+                               mesure = {'Value': str(Light), 'SensoractionReference': str(s[0])}
+                               self.mysql.insert('/measure', mesure)
+
             data_type = "json"
-            content += obj
+            content = obj
 
         if content == '': #compte non trouve
             self.send_response(REDIRECTION)
@@ -1469,6 +1508,10 @@ class MySQL():
 		print(attr,val)
 		req = "insert into %s (%s) values (%s)" %(path.split('/')[1], attr, val)
 		print(req)
+		self.c.execute(req)
+		self.conn.commit()
+	def update(nom_table, nom_colonne, valeur, condition_value):
+		req = "update %s set %s = %s where id=%s"%(nom_table, nom_colonne, valeur, condition_value)
 		self.c.execute(req)
 		self.conn.commit()
 

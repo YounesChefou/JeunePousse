@@ -54,6 +54,7 @@ CREATE TABLE plant (
   KitReference INTEGER NOT NULL,
   PortCOM INTEGER NOT NULL,
   ReferenceProductNumber INTEGER NOT NULL,
+  Performance INTEGER NOT NULL, -- 1 oui ; 0 mode vacance
   DateInsertion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (PlantReference) REFERENCES plantreference(id),
   FOREIGN KEY (RoomReference) REFERENCES room(id),

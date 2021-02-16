@@ -1,4 +1,4 @@
-const char[] = "123454321"
+const char ref[] = "123454321"
 
 struct post_commands{
   const char *first_connexion = "first_connexion";
@@ -49,8 +49,30 @@ char *rand_string(size_t size){
 void connect_to_server(){
   if (http.run() == WL_CONNECTED) {
     HTTPClient http;
+    sprintf(SERVER_LINK, "%s%d/%s", SERVER_URL, server_general_portCOM, p.first_connexion);
     http.begin(SERVER_LINK);
     http.addHeader("Content-Type", "application/json");
+    StaticJsonDocument<200> doc;
+    doc["Reference"] = ref;
+    doc["kit_name"] = kit;
+    String requestBody;
+    serializeJson(doc, requestBody);
+
+    int httpResponseCode = http.POST(requestBody);
+    if(httpResponseCode > 0){
+
+      String response = http.getString();
+      deserializeJson(doc, response);
+
+      //on met a jour le port de communication propre a ce systeme
+      server_own_portCOM = atoi(doc["PortCOM"]);
+      activation = atoi(doc["Activation"]);
+      http.end();
+      return doc;
+    }
+    while(!activation){
+
+    }
+    http.end();
   }
-  sprintf(SERVER_LINK, "%s%d/%s", SERVER_URL, server_general_portCOM, p.first_connexion);
 }
