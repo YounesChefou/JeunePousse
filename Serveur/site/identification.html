@@ -18,29 +18,15 @@
     <!-- Custom styles for this template -->
     <!-- <link href="identification.css" rel="stylesheet"> -->
     <style>
-    html,body {
-      height: 100%;
-    }
 
     body {
-      display: -ms-flexbox;
-      display: -webkit-box;
-      display: flex;
-      -ms-flex-align: center;
-      -ms-flex-pack: center;
-      -webkit-box-align: center;
-      align-items: center;
-      -webkit-box-pack: center;
-      justify-content: center;
-      padding-top: 40px;
-      padding-bottom: 40px;
       background-color: #f5f5f5;
+      overflow-x: hidden;
     }
 
     .form-signin {
       width: 100%;
       max-width: 330px;
-      padding: 15px;
       margin: 0 auto;
     }
     .form-signin .form-control:focus {
@@ -50,8 +36,10 @@
   </head>
 
   <body class="text-center">
-    <div class="row text-center">
-      <div class="col-sm-5">
+    <div class="row text-center align-middle" style="margin-top:10%;">
+      <div class="col-sm-1">
+      </div>
+      <div class="col-sm-4">
         <form class="form-signin" action="http://localhost:8888/connexion" method="post">
           <h1 class="h3 mb-3 font-weight-normal">Bonjour, veuillez entrer vos identifiants</h1>
           <label for="inputEmail" class="sr-only">E-mail</label>
@@ -62,9 +50,10 @@
         </form>
       </div>
       <div class="col-sm-2">
-        <img class="mb-4" src="https://raw.githubusercontent.com/YounesChefou/JeunePousse/main/Serveur/Logo_JeunePousse.png" alt="" width="144" height="144">
+        <img class="mb-4 rounded-circle" src="https://raw.githubusercontent.com/YounesChefou/JeunePousse/main/Serveur/Logo_JeunePousse.png" alt="" width="144" height="144">
       </div>
-      <div class="col-sm-5">
+
+      <div class="col-sm-4">
         <form class="form-signin" action="http://localhost:8888/add_account" method="post">
           <h1 class="h3 mb-3 font-weight-normal">Pas de compte ?<br>Ajoutez votre logement</h1>
           <label for="inputNumlogement" class="sr-only">Numéro du logement</label>

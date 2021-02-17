@@ -413,10 +413,9 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     return content
 
 def convert_time(time):
-    list_ = time.split("-")
+    list_ = time.split("-", 1)
     year = list_[0]
     month = list_[1]
-    day = list_[2]
 
     print(month)
     list_ = month.split("-",1)
@@ -432,7 +431,7 @@ def convert_time(time):
     hour = list_[0]
     min = list_[1]
     list_ = min.split(":", 1)
-    mint[0]
+    min = list_[0]
     return year, month, day, hour, min
 
 def construct_option_page(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, performance, active_room):
