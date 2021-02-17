@@ -1,6 +1,7 @@
 import http.server, urllib.parse, sqlite3, requests, threading,  socketserver, datetime, cgi, random
 from urllib.parse import urlparse
 from math import *
+import json
 
 email_root = "root@root.root"
 password_root = "root@root.root"
@@ -1364,15 +1365,13 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(REDIRECTION)
 
         elif "/kit_connexion" == self.path.lower():
-            #recuperer
-            #temporary_reference
-            #nom_du_kit
+            print("Serveur kit connexion")
             q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
-            query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+            #query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
 
             print(q)
-            print(query)
-            obj = query[''] #TODO
+            # obj = query[''] #TODO
+            obj = json.loads(q)
             temporary_reference = obj['Reference']
             nom_du_kit = obj['kit_name']
 
@@ -1418,7 +1417,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                     portCOM = -1
             obj = { 'PortCOM' : str(portCOM) }
             data_type = "json"
-            content = obj
+            content += str(obj)
 
 
         elif "/add_measure" == self.path.lower():
@@ -1588,11 +1587,12 @@ class ThreadingHTTPServer (socketserver . ThreadingMixIn ,http . server . HTTPSe
 	pass
 
 def serve_on_port(port) :
-	server = ThreadingHTTPServer (("localhost", port) , MyHandler)
+	server = ThreadingHTTPServer (("", port) , MyHandler)
 	server.serve_forever()
 
 if __name__ == '__main__':
 	# start_capteur_threads()
 	#On ouvre un 4e thread pour toutes les autres requêtes
-	threading.Thread(target=serve_on_port, args=[8888]).start()
-	print("Divers : 8888");
+    threading.Thread(target=serve_on_port, args=[7777]).start()
+    threading.Thread(target=serve_on_port, args=[8888]).start()
+    print("Divers : 8888");
