@@ -237,11 +237,11 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
                           value.append((m[1], convert_time(m[3])))
                           i -= 1
               sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
-
+      content += create_one_chart(sensor, p[0])
     #content += create_one_chart(sensor, str(p[0]))
-    #f = open('site/end_header_dashboard.html', 'r')
-    #content += f.read()
-    #f.close()
+    f = open('site/end_header_dashboard.html', 'r')
+    content += f.read()
+    f.close()
     content += html_body
     content += add_nav_bar(1, user[0], active_room, performance, 1) #ajout de la navbar
 
@@ -402,7 +402,7 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
       content += 'function display_graph{}() '.format(p[0])
       content += ' {var x = document.getElementById("graph'
       content += '{}");'.format(p[0])
-      content += 'if (x.style.display === "none") {x.style.display = "block";} else {x.style.display = "none";}}'
+      content += 'if (x.style.display === "none") {x.style.display = "block"; drawChart{};} else {x.style.display = "none";}}'
     content += '</script>'
 
 
@@ -412,9 +412,11 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     return content
 
 def convert_time(time):
-    list_ = time.split("-",1)
+    list_ = time.split("-")
     year = list_[0]
     month = list_[1]
+    day = list_[2]
+
     print(month)
     list_ = month.split("-",1)
     month_ = list_[0]
@@ -428,6 +430,8 @@ def convert_time(time):
     list_ = hour.split(":", 1)
     hour = list_[0]
     min = list_[1]
+    list_ = min.split(":", 1)
+    mint[0]
     return year, month, day, hour, min
 
 def construct_option_page(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, performance, active_room):
