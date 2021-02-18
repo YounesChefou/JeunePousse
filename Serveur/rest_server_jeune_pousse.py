@@ -1,7 +1,8 @@
-import http.server, urllib.parse, sqlite3, requests, threading,  socketserver, datetime, cgi, random
+import http.server, urllib.parse, sqlite3, requests, threading,  socketserver, cgi, random
 from urllib.parse import urlparse
 from math import *
 import json
+import datetime as dt
 
 port = []
 
@@ -94,105 +95,6 @@ def get_room_image(room_name):
     content = f.read()
     f.close()
     return content
-
-def create_one_chart(sensor, chart_name):
-    content = ''
-    content += 'function drawChart{}()'.format(chart_name)
-    content += '{\n'
-    content += 'var chartDiv{} = document.getElementById(\'chart_div{}\');\n'.format(chart_name, chart_name)
-    content += 'var data{} = new google.visualization.DataTable();\n'.format(chart_name)
-    content += 'data{}.addColumn(\'date\', \'Cette semaine\');\n'.format(chart_name)
-    nb_rows = 0
-    for s in sensor: #on definit les axes
-        content += 'data{}.addColumn(\'number\', "{}");\n'.format(s[0], chart_name)
-        if nb_rows == 0:
-            nb_rows = len(s[1])
-    content += 'data{}.addRows([\n'.format(chart_name) #on ajoute les donnees
-    value_by_row = []
-    dates = []
-    for s in sensor:
-        measure = s[1]
-    for i in range(0, nb_rows):
-        j = 0
-        content += '['
-        for s in sensor:
-            measure = s[1] #mesure et date
-            if len(measure) > 0:
-                act = measure[i]
-                val_act = act[0]
-                dat_act = act[1]
-                if j == 0:
-                    content += 'new Date({}, {}, {}, {}, {}),'.format(dat_act[0],str(int(dat_act[1]) - 1) ,dat_act[2],dat_act[3],dat_act[4])
-                    j = 1
-                content += str(val_act)
-                if s != sensor[-2]:
-                    content += ','
-        content += ']'
-        if i != nb_rows - 1:
-            content += ','
-    content += ']\n);\n'
-    content += 'var materialOptions{} = '.format(chart_name)
-    content += '{width: 400,height: 500};\n'
-
-    content += 'var materialChart{} = new google.charts.Line(chartDiv{});\n'.format(chart_name, chart_name)
-    content += 'materialChart{}.draw(data{}, materialOptions{});\n'.format(chart_name, chart_name, chart_name)
-    content += '}'
-    return content
-
-def construct_graph(data, data_legend, data_type, button):
-    year = datetime.datetime.today().year
-    month = datetime.datetime.today().month - 1
-    next_year = year
-    next_month = month + 2
-    if next_month > 11:
-        next_month = next_month - 11
-        next_year = year + 1
-    content = '<script type="text/javascript">'
-    content += 'google.charts.load("current", {packages:["corechart"]});'
-    content += 'google.charts.setOnLoadCallback(drawChart);'
-    content += 'function drawChart() {'
-    content += 'var data = new google.visualization.DataTable();'
-    content += 'data.addColumn(\'datetime\', \'Temps\');'
-    content += 'data.addColumn(\'number\', \'{}({})\');'.format(data_legend, data_type)
-    content += 'data.addRows(['
-    for d in data:
-        value = d[0]
-        date = d[1]
-        content += '[new Date({}, {}, {}, {}), {}],'.format(date[0], date[1], date[2], date[3], value)
-    content += ']);'
-    content += 'var options = {width: 900,height: 500,legend: {position: \'none\'},enableInteractivity: false,chartArea: {width: \'85%\'},'
-    content += 'hAxis: {viewWindow: {min: new Date('
-    content += str(year - 5)
-    content += ', 0, 0),max: new Date('
-    content += str(year + 1)
-    content += ', 11, 31)},'
-    content += 'gridlines: {count: -1,units: {days: {format: [\'MMM dd\']},hours: {format: [\'HH:mm\', \'ha\']},}},'
-    content += 'minorGridlines: {units: {hours: {format: [\'hh:mm:ss a\', \'ha\']},minutes: {format: [\'HH:mm a Z\', \':mm\']}'
-    content += '}}}};'
-    content += 'var chart = new google.visualization.LineChart(document.getElementById(\'{}\'));'.format(data_legend)
-    content += 'chart.draw(data, options);var button = document.getElementById(\'{}\');var isChanged = false;'.format(button)
-    content += 'button.onclick = function () {if (!isChanged) {options.hAxis.viewWindow.min = new Date('
-    content += str(year)
-    content += ','
-    content += str(month)
-    content += ', 1);'
-    content += 'options.hAxis.viewWindow.max = new Date('
-    content += str(next_year)
-    content += ','
-    content += str(next_month)
-    content += ', 28);'
-    content += 'isChanged = true;'
-    content += '} else {'
-    content += 'options.hAxis.viewWindow.min = new Date('
-    content += str(year - 5)
-    content += ', 0, 1);'
-    content += 'options.hAxis.viewWindow.max = new Date('
-    content += str(year + 1)
-    content += ', 11, 31);'
-    content += 'isChanged = false;'
-    content += '}chart.draw(data, options);};}</script>'
-    return content
-
 
 def construct_dashboard(home, user_list, room_list, user_plant_list, kitreference_list, reference_plant_list, user_sensor, user_measure, performance, active_room):
     user = user_list
@@ -1568,15 +1470,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                         groundquality_ref = 1
                     else :
                         groundquality_ref = 0 #bonne humiditee du sol
-                    luminosity_ref = Luminosity - luminosity_ref
-                    if luminosity_ref < 0: #lumiere deja bien
-                        luminosity_ref = 0
-                        light_ref = 0
-                    else :
-                        luminosity_ref = -1 #pas assez de lumiere
-                        light_ref = 100 * Luminosity / luminosity_ref
-                        if light_ref > 100:
-                            light_ref = 100
+                    light_ref = 0
+                    heure = dt.datetime.now().hour
+                    if (heure > 6) & (heure < 20):
+                        light_ref = 1
                     if WaterLevel < 20:
                         water_level_ref = 0 #attention, surveiller le niveau d'eau
                     elif WaterLevel < 5:
