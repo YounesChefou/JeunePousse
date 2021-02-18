@@ -44,6 +44,9 @@ icone_3_traits = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
 icone_graphe = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-line-fill" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2z"/></svg>'
 icone_question = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-square-fill" viewBox="0 0 16 16"><path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm3.496 6.033a.237.237 0 0 1-.24-.247C5.35 4.091 6.737 3.5 8.005 3.5c1.396 0 2.672.73 2.672 2.24 0 1.08-.635 1.594-1.244 2.057-.737.559-1.01.768-1.01 1.486v.105a.25.25 0 0 1-.25.25h-.81a.25.25 0 0 1-.25-.246l-.004-.217c-.038-.927.495-1.498 1.168-1.987.59-.444.965-.736.965-1.371 0-.825-.628-1.168-1.314-1.168-.803 0-1.253.478-1.342 1.134-.018.137-.128.25-.266.25h-.825zm2.325 6.443c-.584 0-1.009-.394-1.009-.927 0-.552.425-.94 1.01-.94.609 0 1.028.388 1.028.94 0 .533-.42.927-1.029.927z"/></svg>'
 
+
+bdd_user_capt = ["Name", "Unit", "PlantReference", "DateInsertion"]
+bdd_user_plant_fields = ["id", "PlantReference", "RoomReference", "PortCOM", "Reference SN", "Performance"]
 bdd_home_fields = ["id", "Location", "Ip", "Number Of Rooms", "Insertion Date", ""]
 bdd_room_fields = ["", "id", "Name", "Home Reference", "Insertion Date", ""]
 bdd_user_fields = ["id", "Name", "Email", "Password", "Home Reference", "Insertion Date"]
@@ -822,12 +825,20 @@ def add_nav_bar_root(activ_num):
         content += '<li class="active"><a href="http://localhost:8888/root_kit">kits</a></li>'
     else :
         content += '<li><a href="http://localhost:8888/root_kit">kits</a></li>'
+    if activ_num == 6:
+        content += '<li class="active"><a href="http://localhost:8888/root_user_plant">modules</a></li>'
+    else :
+        content += '<li><a href="http://localhost:8888/root_user_plant">modules</a></li>'
+    if activ_num == 7:
+        content += '<li class="active"><a href="http://localhost:8888/root_user_capt">capteurs</a></li>'
+    else :
+        content += '<li><a href="http://localhost:8888/root_user_capt">capteurs</a></li>'
     content += '</ul>'
     content += '<ul class="nav navbar-nav navbar-right"><li><a href="http://localhost:8888/home"><span class="glyphicon glyphicon-user"></span> Root Log Out</a></li></ul>'
     content += '</div>\n</nav>'
     return content
 
-def root_access(type_to_display, home_list, user_list, room_list, plant_list, kit_list):
+def root_access(type_to_display, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list):
 
     #content = html_start #ajout DOCTYPE html lang title meta head
     #content += html_body
@@ -862,7 +873,16 @@ def root_access(type_to_display, home_list, user_list, room_list, plant_list, ki
         legend = bdd_kit_fields
         for d in kit_list:
             data.append([d[1], d[2], d[3], d[4]])
-
+    elif type_to_display == '/root_user_plant':
+        content += add_nav_bar_root(6)
+        legend = bdd_user_plant_fields
+        for d in user_plant_list:
+            data.append([d[0], d[1], d[2], d[4], d[5], d[6]])
+    elif type_to_display == '/root_user_capt':
+        content += add_nav_bar_root(7)
+        legend = bdd_user_capt
+        for d in user_sensor_list:
+            data.append(["", d[1], d[2], d[3], d[4], ""])
 
     if(type_to_display == '/root_kit'):
         content += '<div class="row">'
@@ -881,6 +901,21 @@ def root_access(type_to_display, home_list, user_list, room_list, plant_list, ki
         content += '</form>'
         content += '</div>'
         content += '</div>'
+    if(type_to_display == '/root_user_plant'):
+        print('test ajout plante')
+        content += '<div class="row">'
+        content += '<div class="col-sm-12">'
+        content += '<form class="form-signin" action="http://localhost:8888/kit_connexion" method="post">'
+        content += '<h1 class="h3 mb-3 font-weight-normal">ROOT ACCESS : ajouter un module</h1>'
+        content += '<label for="Reference" class="sr-only">Reference</label>'
+        content += '<input id="Reference" name="Reference" class="form-control" placeholder="Reference" required autofocus>'
+        content += '<label for="kit_name" class="sr-only">Nom du kit</label>'
+        content += '<input id="kit_name" name="kit_name" class="form-control" placeholder="Nom du kit" required autofocus>'
+        content += '<button class="btn btn-secondary btn-lg btn-block" type="submit">Ajouter le kit</button>'
+        content += '</form>'
+        content += '</div>'
+        content += '</div>'
+        print(user_plant_list)
     if type_to_display == '/root_plant':
         content += '<div class="row">'
         content += '<div class="col-sm-12">'
@@ -988,8 +1023,9 @@ def get_home(home_bdd, home_id):
     return []
 
 def serve_on_port(port):
-    server = ThreadingHTTPServer(("localhost",port), MyHandler)
-    server.serve_forever()
+    #server = ThreadingHTTPServer(("localhost",port), MyHandler)
+    #server.serve_forever()
+    return
 
 class MyHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -1044,7 +1080,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             plant_list = self.mysql.select('/plantreference')
             home_list = self.mysql.select('/home')
             kit_list = self.mysql.select('/kitreference')
-            content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list)
+            user_plant_list = self.mysql.select('/plant')
+            user_sensor_list = self.mysql.select('/sensoraction')
+            content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
 
         if(content == ''):
             self.send_response(404)
@@ -1094,7 +1132,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             plant_list = self.mysql.select('/plantreference')
             home_list = self.mysql.select('/home')
             kit_list = self.mysql.select('/kitreference')
-            content = root_access('/root_kit', home_list, user_list, room_list, plant_list, kit_list)
+            user_plant_list = self.mysql.select('/plant')
+            user_sensor_list = self.mysql.select('/sensoraction')
+            content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
             self.send_response(REDIRECTION)
 
         elif self.path.lower() == "/root_add_plant":
@@ -1120,7 +1160,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             plant_list = self.mysql.select('/plantreference')
             home_list = self.mysql.select('/home')
             kit_list = self.mysql.select('/kitreference')
-            content = root_access('/root_plant', home_list, user_list, room_list, plant_list, kit_list)
+            user_plant_list = self.mysql.select('/plant')
+            user_sensor_list = self.mysql.select('/sensoraction')
+            content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
             self.send_response(REDIRECTION)
 
         elif self.path.lower() == "/connexion":
@@ -1135,7 +1177,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 plant_list = self.mysql.select('/plant')
                 home_list = self.mysql.select('/home')
                 kit_list = self.mysql.select('/kitreference')
-                content = root_access('/root_home', home_list, user_list, room_list, plant_list, kit_list)
+                user_plant_list = self.mysql.select('/plant')
+                user_sensor_list = self.mysql.select('/sensoraction')
+                content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
                 self.send_response(REDIRECTION)
             else :
                 user_not_found = True
@@ -1365,14 +1409,19 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
         elif "/kit_connexion" == self.path.lower():
             print("Serveur kit connexion")
-            q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+            temp = self.rfile.read(int(self.headers['Content-Length']))
+            data = dict(urllib.parse.parse_qs(temp.decode('UTF-8')))
+            #q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
             #query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
 
-            print(q)
-            # obj = query[''] #TODO
-            obj = json.loads(q)
-            temporary_reference = obj['Reference']
-            nom_du_kit = obj['kit_name']
+            #print(q)
+            # data = query[''] #TODO
+            #data = json.loads(q)
+            #temporary_reference = data['Reference']
+            #nom_du_kit = data['kit_name']
+            temporary_reference = "{}".format(data.get('Reference')[0])
+            print(temporary_reference)
+            nom_du_kit = "{}".format(data.get('kit_name')[0])
 
             user_plant_list = self.mysql.select('/plant')
 
@@ -1383,34 +1432,47 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 if p[5] == temporary_reference:
                     portCOM = int(p[4])
             if portCOM == 0 :
-                portCOM = int(user_plant_list[-1][4]) + 10
+                if len(user_plant_list) > 0:
+                    last_p = user_plant_list[-1]
+                    portCOM = int(last_p[4]) + 10
+                else :
+                    portCOM = 8890
                 kitreference_list = self.mysql.select('/kitreference')
                 correct_kit_name = False
                 for k in kitreference_list:
                     if k[1] == nom_du_kit:
                         correct_kit_name = True
                 if correct_kit_name:
-                    plant = {'PlantReference': '-1', 'RoomReference': '-1', 'KitReference': nom_du_kit, 'PortCOM': str(portCOM), 'ReferenceProductNumber': temporary_reference, 'Performance': '-1'}
+                    plant = {'PlantReference': ['-1'], 'RoomReference': ['-1'], 'KitReference': [nom_du_kit], 'PortCOM': [str(portCOM)], 'ReferenceProductNumber': [temporary_reference], 'Performance': ['-1']}
                     self.mysql.insert('/plant', plant)
                     plant_id = len(self.mysql.select('/plant'))
 
                     kitreference_list = self.mysql.select('/kitreference')
 
                     for k in kitreference_list:
-                        if k[0] == p[3]: #kit de la plante
-                            capteurs_comma = k[1]
-                            unites_comma = k[2]
-                            #on retire les virgules
-                            capteurs = capteurs_comma.split(",")
-                            unites = unites_comma.split(",")
-                            #on cree les capteurs
-                            i = 0
-                            for c in capteurs:
-                                capteur = {'Name': c, 'Unit': unites[i], 'PlantReference': str(plant_id)}
+                        #if k[0] == p[3]: #kit de la plante
+                        capteurs_comma = k[2]
+                        unites_comma = k[3]
+                        #on retire les virgules
+                        capteurs = capteurs_comma.split(",")
+                        unites = unites_comma.split(",")
+                        print("CAPTEURS !!!!")
+                        print(capteurs)
+                        #on cree les capteurs
+                        i = 0
+                        for c in capteurs:
+                            unit_ = unites[i]
+                            capteur = {'Name': [c], 'Unit': [unit_], 'PlantReference': [str(plant_id)]}
+                            capt = self.mysql.select('/sensoraction')
+                            sensor_already_add = False
+                            for ca in capt:
+                                if (ca[1] == c) & (ca[2] == unit_) & (ca[3] == str(plant_id)):
+                                    sensor_already_add = True
+                            if not sensor_already_add:
                                 self.mysql.insert('/sensoraction', capteur)
-                                i += 1
-                            #on cree un thread pour ecouter sur ce port
-                            threading.Thread(target=serve_on_port, args=[portCOM]).start()
+                            i += 1
+                        #on cree un thread pour ecouter sur ce port
+                        #threading.Thread(target=serve_on_port, args=[portCOM]).start()
 
                 else :
                     portCOM = -1
