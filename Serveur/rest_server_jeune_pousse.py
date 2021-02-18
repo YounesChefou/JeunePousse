@@ -1490,18 +1490,21 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
             query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
 
-            obj = query[''] #TODO
+            obj = json.loads(q)
+            print(obj)
+
+            # obj = query[''] #TODO
             Reference = obj['Reference']
             Temperature = obj['Temperature']
             Humidity = obj['Humidity']
             Luminosity = obj['Luminosity']
             GroundQuality = obj['GroundQuality']
             WaterLevel = obj['WaterLevel']
-            Light = obj['Light']
 
             plants = self.mysql.select('/plant')
             reference_plant_list = self.mysql.select('/plantreference')
             sensors = self.mysql.select('/sensoraction')
+
             for p in plants:
                 if p[-3] == Reference: #on a trouve la plante
                    performance = p[-2]
@@ -1564,17 +1567,17 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                         water_level_ref = -1 #urgent, rservoir quasi vide
                    else : #mode vacance
                     delay = 60000 #ms = 1min
-                   obj = {
-                    'mode' : int(performance), #1 performance, 0 vacances
-                    'delay' : delay,
-                    'temp_indicator': temperature_ref,
-                    'hum_indicator': humidity_ref,
-                    'lum_indicator': luminosity_ref,
-                    'grnd_indicator': groundquality_ref,
-                    'water_indicator': water_level_ref,
-                    'light_power': light_ref,
-                    'irrig_score': irrigation_score
-                   }
+
+                    obj['mode'] = int(performance), #1 performance, 0 vacances
+                    obj['delay'] = delay,
+                    obj['temp_indicator'] = temperature_ref,
+                    obj['hum_indicator'] = humidity_ref,
+                    obj['lum_indicator'] = luminosity_ref,
+                    obj['grnd_indicator'] = groundquality_ref,
+                    obj['water_indicator'] = water_level_ref,
+                    obj['light_power'] = light_ref,
+                    obj['irrig_score'] = irrigation_score
+
                    #on ajoute les mesures dans la bdd
                    for s in sensors:
                        if s[3] == p[0]:
@@ -1603,22 +1606,28 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         if content == '': #compte non trouve
             self.send_response(REDIRECTION)
             self.send_header('Location', '/')
+            self.end_headers()
 
         elif data_type == "json":
             self.send_response(200)
-            body = content.encode("utf8")
+            # body = str(content).encode("utf8")
             self.send_header("Content-type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
+            #self.send_header("Content-Length", len(content))
+            self.end_headers()
+            body = json.dumps(content).encode("utf8")
+            print(body)
+            self.wfile.write(body)
 
         else :
             self.send_response(200)
             body = content.encode("utf8")
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
-		#self.send_header("Content-type", "text/html")
-        self.end_headers()
-        if(content != ''):
+            self.end_headers()
             self.wfile.write(body)
+		#self.send_header("Content-type", "text/html")
+
+
 
 class MySQL():
 	def __init__(self, name):
