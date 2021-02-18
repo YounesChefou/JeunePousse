@@ -1413,21 +1413,27 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
         elif "/kit_connexion" == self.path.lower():
             print("Serveur kit connexion")
-            temp = self.rfile.read(int(self.headers['Content-Length']))
-            data = dict(urllib.parse.parse_qs(temp.decode('UTF-8')))
-            #q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
-            #query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
+
+            # data = dict(urllib.parse.parse_qs(temp.decode('UTF-8')))
+            q = self.rfile.read(int(self.headers['content-length'])).decode(encoding="utf-8")
+            query = urllib.parse.parse_qs(q,keep_blank_values=1,encoding='utf-8')
 
             #print(q)
             # data = query[''] #TODO
             #data = json.loads(q)
             #temporary_reference = data['Reference']
             #nom_du_kit = data['kit_name']
-            temporary_reference = "{}".format(data.get('Reference')[0])
-            print(temporary_reference)
-            nom_du_kit = "{}".format(data.get('kit_name')[0])
 
+            obj = json.loads(q)
+            temporary_reference = obj['Reference']
+            nom_du_kit = obj['kit_name']
+
+            print("Temporary reference :")
+            print(temporary_reference)
+
+            print("Nom kit :")
             print(nom_du_kit)
+
             user_plant_list = self.mysql.select('/plant')
 
             already_in_database = False
@@ -1481,9 +1487,11 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
                 else :
                     portCOM = -1
-            obj = { 'PortCOM' : str(portCOM) }
+
+            obj['PortCOM'] = str(portCOM)
+
             data_type = "json"
-            content += str(obj)
+            content = obj
 
 
         elif "/add_measure" == self.path.lower():
@@ -1568,15 +1576,15 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                    else : #mode vacance
                     delay = 60000 #ms = 1min
 
-                    obj['mode'] = int(performance), #1 performance, 0 vacances
-                    obj['delay'] = delay,
-                    obj['temp_indicator'] = temperature_ref,
-                    obj['hum_indicator'] = humidity_ref,
-                    obj['lum_indicator'] = luminosity_ref,
-                    obj['grnd_indicator'] = groundquality_ref,
-                    obj['water_indicator'] = water_level_ref,
-                    obj['light_power'] = light_ref,
-                    obj['irrig_score'] = irrigation_score
+                   obj['mode'] = int(performance), #1 performance, 0 vacances
+                   obj['delay'] = delay,
+                   obj['temp_indicator'] = temperature_ref,
+                   obj['hum_indicator'] = humidity_ref,
+                   obj['lum_indicator'] = luminosity_ref,
+                   obj['grnd_indicator'] = groundquality_ref,
+                   obj['water_indicator'] = water_level_ref,
+                   obj['light_power'] = light_ref,
+                   obj['irrig_score'] = irrigation_score
 
                    #on ajoute les mesures dans la bdd
                    for s in sensors:
