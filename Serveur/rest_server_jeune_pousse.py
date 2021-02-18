@@ -277,127 +277,128 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     content += '<h1 class="sticky" style="color:{};"><b><br>Mon dashboard de<br>{}</b></h1>'.format(color, nom_room_active)
     content += '<h1><br><br><br><br><br><br><br><br><br><br><br></h1>'
     content += '</div>'
-    for p in user_plant:
-        good = 0
-        nom = ''
-        temperature = ''
-        humidity = ''
-        luminosity = ''
-        groundquality = ''
-        img_url = ''
-        for p_r in reference_plant_list:
-            if p[1] == p_r[0]:
-                nom = p_r[1]
-                temperature = p_r[3]
-                humidity = p_r[4]
-                luminosity = p_r[5]
-                groundquality = p_r[6]
-                img_url = p_r[7]
-        sensor = []
-        for s in user_sensor:
-            if s[3] == p[0]:
-                value = user_measure[0]
-                for m in user_measure:
-                    if m[2] == s[0]:
-                        value = m
-                sensor.append((s[1], value[1], s[2], value[-1])) #nom du capteur, valeur, unite, date de la mesure
-        #content += '<div class="row">' #debut ligne => plante
-        #content += '<img src="{}" class="img-fluid" alt="Responsive image" >'.format(img_dashboard) #width="40" height="40"
-        #content += '</div>'
-        content += '<div class="row" style="background-color:#E1D5C8;">' #debut ligne => plante
+    if (len(user_measure) != 0) & (len(user_sensor) != 0):
+        for p in user_plant:
+            good = 0
+            nom = ''
+            temperature = ''
+            humidity = ''
+            luminosity = ''
+            groundquality = ''
+            img_url = ''
+            for p_r in reference_plant_list:
+                if p[1] == p_r[0]:
+                    nom = p_r[1]
+                    temperature = p_r[3]
+                    humidity = p_r[4]
+                    luminosity = p_r[5]
+                    groundquality = p_r[6]
+                    img_url = p_r[7]
+            sensor = []
+            for s in user_sensor:
+                if s[3] == p[0]:
+                    value = user_measure[0]
+                    for m in user_measure:
+                        if m[2] == s[0]:
+                            value = m
+                    sensor.append((s[1], value[1], s[2], value[-1])) #nom du capteur, valeur, unite, date de la mesure
+            #content += '<div class="row">' #debut ligne => plante
+            #content += '<img src="{}" class="img-fluid" alt="Responsive image" >'.format(img_dashboard) #width="40" height="40"
+            #content += '</div>'
+            content += '<div class="row" style="background-color:#E1D5C8;">' #debut ligne => plante
 
-        content += '<div class="row text-left" >' #debut ligne nom plante
-        content += '<div class="col-sm-6"><ul><h2 style="color:#7386D5;">Données de ma plante : <b>{}</b></h2></div></ul>'.format(nom)
-        content += '<div class="col-sm-3"><h2 class="text-center" style="color:#7386D5;">'
-        content += '<svg onclick="display_graph{}() "'.format(p[0])
-        content += ' xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-line-fill" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2z"/></svg>'
-        content += ' '
-        content += icone_question
-        content += '</h2></div>'
-        content += '<div class="col-sm-3">'
-        maj = ''
-        for s in sensor:
-            maj = s[3]
-        content += '<p class="text-center"><br>Dernière mise à jour {}</p>'.format(maj)
-        content += '</div>'
-        content += '</div>'
-        content += '<legend>'
-        content += '</legend>' #fin ligne nom plante
-
-        #content += '<legend style="background-color:#E1D5C8;"><p></p></legend>'
-        #content += '<div class="row text-left">' #debut ligne donnees plante
-        content += '<div class="col-sm-9" >' #debut ligne donnees brutes
-        i = 0
-        for s in sensor:
-            if i == 0:
-                content += '<div class= "row text-center">'
-            content += '<div class="col-sm-5">'
-            name = s[0]
-            if name == 'GroundQuality':
-                name = 'Soil humidity'
-            content += '<h3>{}</h3><h4> {} {}</h4>'.format(name, s[1], s[2])
+            content += '<div class="row text-left" >' #debut ligne nom plante
+            content += '<div class="col-sm-6"><ul><h2 style="color:#7386D5;">Données de ma plante : <b>{}</b></h2></div></ul>'.format(nom)
+            content += '<div class="col-sm-3"><h2 class="text-center" style="color:#7386D5;">'
+            content += '<svg onclick="display_graph{}() "'.format(p[0])
+            content += ' xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-line-fill" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2z"/></svg>'
+            content += ' '
+            content += icone_question
+            content += '</h2></div>'
+            content += '<div class="col-sm-3">'
+            maj = ''
+            for s in sensor:
+                maj = s[3]
+            content += '<p class="text-center"><br>Dernière mise à jour {}</p>'.format(maj)
             content += '</div>'
-            i += 1
-            if i == 2:
+            content += '</div>'
+            content += '<legend>'
+            content += '</legend>' #fin ligne nom plante
+
+            #content += '<legend style="background-color:#E1D5C8;"><p></p></legend>'
+            #content += '<div class="row text-left">' #debut ligne donnees plante
+            content += '<div class="col-sm-9" >' #debut ligne donnees brutes
+            i = 0
+            for s in sensor:
+                if i == 0:
+                    content += '<div class= "row text-center">'
+                content += '<div class="col-sm-5">'
+                name = s[0]
+                if name == 'GroundQuality':
+                    name = 'Soil humidity'
+                content += '<h3>{}</h3><h4> {} {}</h4>'.format(name, s[1], s[2])
                 content += '</div>'
-                i = 0
-        #content += '</ul>'
-        content += '</div>'#fin ligne donnees brutes
-        content += '<div class="col-sm-3" style="background-color:white;">' #debut colonne plante reference
-        content += '<div class="row text-left">'
-        content += '<div class="col-sm-8">'
-        content += '<h4> Informations sur les {}s'.format(nom)
-        content += '</div>'
-        content += '<div class="col-sm-4">'
-        content += '<img src="{}" class="img-fluid" alt="Responsive image" width="65" height="65">'.format(img_url)
-        content += '</div>'
-        content += '</div>'
-        content += '<div class="row text-left">'
-        content += '<div class="col-sm-6">'
-        f = open('site/pictures/temperature.txt')
-        url = f.read()
-        f.close()
-        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}°C</h4>'.format(url, str(temperature))
-        #content += '</div>'
-        #content += '<div class="col-sm-2">'
-        #content += '<h4 style="color:#7386D5;">{}°C</h4>'.format(str(temperature))
-        content += '</div>'
-        #content += '<div class="col-sm-1">'
-        content += '<div class="col-sm-6">'
-        f = open('site/pictures/humidity.txt')
-        url = f.read()
-        f.close()
-        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}%</h4>'.format(url, str(humidity))
-        content += '</div>'
-        content += '</div>'
-        #content += '<div class="col-sm-2">'
-        #content += '<h4 style="color:#7386D5;">{}%</h4>'.format(str(humidity))
-        #content += '</div>'
-        #content += '</div>'
-        content += '<div class="row text-left">'
-        content += '<div class="col-sm-6">'
-        f = open('site/pictures/luminosity.txt')
-        url = f.read()
-        f.close()
-        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}L</h4>'.format(url, str(luminosity))
-        content += '</div>'
-        content += '<div class="col-sm-6">'
-        f = open('site/pictures/qualite_sol.txt')
-        url = f.read()
-        f.close()
-        content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}%</h4>'.format(url, str(groundquality))
-        content += '</div>'
-        content += '</div>' #fin colonne plante reference
-        content += '<div class="row" style="background-color:#E1D5C8;"><div class="col-sm-12" style="background-color:#E1D5C8;"><h3></h3></div></div>'
-        content += '</div>'#fin ligne donnees plante
-        content += '</div>'#fin colonne donnees
-        content += '<div class="row" id="graph{}" style="background-color:#F5CB9E;display: none;">'.format(p[0]) #debut graphe
-        content += '<canvas class="my-4 w-100" id="chart_div{}"></canvas>'.format(p[0])
-        content += '</div>' #fin graphe
-        #content += '</div>'#fin ligne => plante
-        content += '<div class="row" style="background-color:#fafafa;">'
-        content += '<h3><br></h3>'
-        content += '</div>'
+                i += 1
+                if i == 2:
+                    content += '</div>'
+                    i = 0
+            #content += '</ul>'
+            content += '</div>'#fin ligne donnees brutes
+            content += '<div class="col-sm-3" style="background-color:white;">' #debut colonne plante reference
+            content += '<div class="row text-left">'
+            content += '<div class="col-sm-8">'
+            content += '<h4> Informations sur les {}s'.format(nom)
+            content += '</div>'
+            content += '<div class="col-sm-4">'
+            content += '<img src="{}" class="img-fluid" alt="Responsive image" width="65" height="65">'.format(img_url)
+            content += '</div>'
+            content += '</div>'
+            content += '<div class="row text-left">'
+            content += '<div class="col-sm-6">'
+            f = open('site/pictures/temperature.txt')
+            url = f.read()
+            f.close()
+            content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}°C</h4>'.format(url, str(temperature))
+            #content += '</div>'
+            #content += '<div class="col-sm-2">'
+            #content += '<h4 style="color:#7386D5;">{}°C</h4>'.format(str(temperature))
+            content += '</div>'
+            #content += '<div class="col-sm-1">'
+            content += '<div class="col-sm-6">'
+            f = open('site/pictures/humidity.txt')
+            url = f.read()
+            f.close()
+            content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}%</h4>'.format(url, str(humidity))
+            content += '</div>'
+            content += '</div>'
+            #content += '<div class="col-sm-2">'
+            #content += '<h4 style="color:#7386D5;">{}%</h4>'.format(str(humidity))
+            #content += '</div>'
+            #content += '</div>'
+            content += '<div class="row text-left">'
+            content += '<div class="col-sm-6">'
+            f = open('site/pictures/luminosity.txt')
+            url = f.read()
+            f.close()
+            content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}L</h4>'.format(url, str(luminosity))
+            content += '</div>'
+            content += '<div class="col-sm-6">'
+            f = open('site/pictures/qualite_sol.txt')
+            url = f.read()
+            f.close()
+            content += '<h4 style="color:#7386D5;"><img src="{}" class="img-fluid" alt="Responsive image" width="40" height="40">{}%</h4>'.format(url, str(groundquality))
+            content += '</div>'
+            content += '</div>' #fin colonne plante reference
+            content += '<div class="row" style="background-color:#E1D5C8;"><div class="col-sm-12" style="background-color:#E1D5C8;"><h3></h3></div></div>'
+            content += '</div>'#fin ligne donnees plante
+            content += '</div>'#fin colonne donnees
+            content += '<div class="row" id="graph{}" style="background-color:#F5CB9E;display: none;">'.format(p[0]) #debut graphe
+            content += '<canvas class="my-4 w-100" id="chart_div{}"></canvas>'.format(p[0])
+            content += '</div>' #fin graphe
+            #content += '</div>'#fin ligne => plante
+            content += '<div class="row" style="background-color:#fafafa;">'
+            content += '<h3><br></h3>'
+            content += '</div>'
     content += '</div>'
     content += '</div>'
 
@@ -1179,7 +1180,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                 kit_list = self.mysql.select('/kitreference')
                 user_plant_list = self.mysql.select('/plant')
                 user_sensor_list = self.mysql.select('/sensoraction')
-                content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
+                content = root_access('/root_home', home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
                 self.send_response(REDIRECTION)
             else :
                 user_not_found = True
@@ -1358,9 +1359,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             user_plant_list = self.mysql.select('/plant')
             for p in user_plant_list:
                 if p[5] == module_reference: #reference du module
-                    update(nom_table, nom_colonne, valeur, condition_value)
                     self.mysql.update("plant", "PlantReference", str(plant_id), str(p[0]) )
                     self.mysql.update("plant", "RoomReference", str(room_id), str(p[0]) )
+                    self.mysql.update("plant", "Performance", performance, '1' ) #on met a jour le mode
 
             user_bdd = self.mysql.select('/user')
             user = get_user(user_bdd, user_t)
@@ -1368,6 +1369,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             user_plant_list = self.mysql.select('/plant')
             home = self.mysql.select('/home')
             reference_plant_list = self.mysql.select('/plantreference')
+            kitreference_list = self.mysql.select('/kitreference')
 
             content = construct_option_page(home, user, room_list, user_plant_list, kitreference_list, reference_plant_list, performance, active_room)
             self.send_response(REDIRECTION)
@@ -1642,7 +1644,7 @@ class MySQL():
 		print(req)
 		self.c.execute(req)
 		self.conn.commit()
-	def update(nom_table, nom_colonne, valeur, condition_value):
+	def update(self, nom_table, nom_colonne, valeur, condition_value):
 		req = "update %s set %s = %s where id=%s"%(nom_table, nom_colonne, valeur, condition_value)
 		self.c.execute(req)
 		self.conn.commit()
