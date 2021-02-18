@@ -1608,9 +1608,9 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
 
         else :
             self.send_response(200)
-    	    body = content.encode("utf8")
-    	    self.send_header("Content-type", "text/html; charset=utf-8")
-    	    self.send_header("Content-Length", str(len(body)))
+            body = content.encode("utf8")
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
 		#self.send_header("Content-type", "text/html")
         self.end_headers()
         if(content != ''):
