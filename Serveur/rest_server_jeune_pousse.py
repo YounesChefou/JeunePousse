@@ -127,29 +127,7 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     f = open('site/header_dashboard.html', 'r')
     content = f.read()
     f.close()
-    #on extrait les mesures
-    for p in user_plant:
-      colo = 0
-      sensor = []
-      unite = []
-      data = []
-      for s in user_sensor:
-          if s[3] == p[0]:
-              value = []
-              i = 50
-              print(user_measure)
-              for m in reversed(user_measure):
-                  if m[2] == s[0]:
-                      if i > 0:
-                          print("MESUREEEE")
-                          value.append((m[1], convert_time(m[3])))
-                          i -= 1
-              sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
-      content += create_one_chart(sensor, p[0])
-    #content += create_one_chart(sensor, str(p[0]))
-    f = open('site/end_header_dashboard.html', 'r')
-    content += f.read()
-    f.close()
+
     content += html_body
     content += add_nav_bar(1, user[0], active_room, performance, 1) #ajout de la navbar
 
