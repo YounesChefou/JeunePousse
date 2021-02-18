@@ -66,15 +66,15 @@ def add_nav_bar(activ_num, id_user, active_room, performance, fixe):
     else:
         content = '<nav class="navbar navbar-inverse"><div class="container-fluid"><div class="navbar-header"><a class="navbar-brand">Jeune Pousse</a></div><ul class="nav navbar-nav">'
     if activ_num == 1:
-        content += '<li class="active"><a href="http://localhost:8888/dashboard/{}/{}/{}">Dashboard</a></li>'.format(str(id_user), str(active_room), str(performance))
+        content += '<li class="active"><a href="/dashboard/{}/{}/{}">Dashboard</a></li>'.format(str(id_user), str(active_room), str(performance))
     else :
-        content += '<li><a href="http://localhost:8888/dashboard/{}/{}/{}">Dashboard</a></li>'.format(str(id_user), str(active_room), str(performance))
+        content += '<li><a href="/dashboard/{}/{}/{}">Dashboard</a></li>'.format(str(id_user), str(active_room), str(performance))
     if activ_num == 2:
-        content += '<li class="active"><a href="http://localhost:8888/option/{}/{}/{}">Configure</a></li>'.format(str(id_user), str(active_room), str(performance))
+        content += '<li class="active"><a href="/option/{}/{}/{}">Configure</a></li>'.format(str(id_user), str(active_room), str(performance))
     else :
-        content += '<li><a href="http://localhost:8888/option/{}/{}/{}">Configure</a></li>'.format(str(id_user), str(active_room), str(performance))
+        content += '<li><a href="/option/{}/{}/{}">Configure</a></li>'.format(str(id_user), str(active_room), str(performance))
     content += '</ul>'
-    content += '<ul class="nav navbar-nav navbar-right"><li><a href="http://localhost:8888/home"><span class="glyphicon glyphicon-user"></span> Log Out</a></li></ul>'
+    content += '<ul class="nav navbar-nav navbar-right"><li><a href="/home"><span class="glyphicon glyphicon-user"></span> Log Out</a></li></ul>'
     content += '</div>\n</nav>'
     return content
 
@@ -258,10 +258,10 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
     nom_room_active = ''
     for r in user_room:
         if int(active_room) == int(r[0]):
-            content += '<a href="http://localhost:8888/dashboard/{}/{}/{}" class="active" >{}</a>'.format(str(user[0]), str((r[0])), str(performance), r[1])
+            content += '<a href="/dashboard/{}/{}/{}" class="active" >{}</a>'.format(str(user[0]), str((r[0])), str(performance), r[1])
             nom_room_active = r[1]
         else:
-            content += '<a href="http://localhost:8888/dashboard/{}/{}/{}">{}</a>'.format(str(user[0]), str((r[0])), str(performance), r[1])
+            content += '<a href="/dashboard/{}/{}/{}">{}</a>'.format(str(user[0]), str((r[0])), str(performance), r[1])
         i += 1
     content += '</div>'
 
@@ -809,35 +809,35 @@ def create_account_add_rooms():
 def add_nav_bar_root(activ_num):
     content = '<nav class="navbar navbar-inverse"><div class="container-fluid"><div class="navbar-header"><a class="navbar-brand">Jeune Pousse Root</a></div><ul class="nav navbar-nav">'
     if activ_num == 1:
-        content += '<li class="active"><a href="http://localhost:8888/root_home">homes</a></li>'
+        content += '<li class="active"><a href="/root_home">homes</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_home">homes</a></li>'
+        content += '<li><a href="/root_home">homes</a></li>'
     if activ_num == 2:
-        content += '<li class="active"><a href="http://localhost:8888/root_room">rooms</a></li>'
+        content += '<li class="active"><a href="/root_room">rooms</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_room">rooms</a></li>'
+        content += '<li><a href="/root_room">rooms</a></li>'
     if activ_num == 3:
-        content += '<li class="active"><a href="http://localhost:8888/root_user">users</a></li>'
+        content += '<li class="active"><a href="/root_user">users</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_user">users</a></li>'
+        content += '<li><a href="/root_user">users</a></li>'
     if activ_num == 4:
-        content += '<li class="active"><a href="http://localhost:8888/root_plant">plants</a></li>'
+        content += '<li class="active"><a href="/root_plant">plants</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_plant">plants</a></li>'
+        content += '<li><a href="/root_plant">plants</a></li>'
     if activ_num == 5:
-        content += '<li class="active"><a href="http://localhost:8888/root_kit">kits</a></li>'
+        content += '<li class="active"><a href="/root_kit">kits</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_kit">kits</a></li>'
+        content += '<li><a href="/root_kit">kits</a></li>'
     if activ_num == 6:
-        content += '<li class="active"><a href="http://localhost:8888/root_user_plant">modules</a></li>'
+        content += '<li class="active"><a href="/root_user_plant">modules</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_user_plant">modules</a></li>'
+        content += '<li><a href="/root_user_plant">modules</a></li>'
     if activ_num == 7:
-        content += '<li class="active"><a href="http://localhost:8888/root_user_capt">capteurs</a></li>'
+        content += '<li class="active"><a href="/root_user_capt">capteurs</a></li>'
     else :
-        content += '<li><a href="http://localhost:8888/root_user_capt">capteurs</a></li>'
+        content += '<li><a href="/root_user_capt">capteurs</a></li>'
     content += '</ul>'
-    content += '<ul class="nav navbar-nav navbar-right"><li><a href="http://localhost:8888/home"><span class="glyphicon glyphicon-user"></span> Root Log Out</a></li></ul>'
+    content += '<ul class="nav navbar-nav navbar-right"><li><a href="/home"><span class="glyphicon glyphicon-user"></span> Root Log Out</a></li></ul>'
     content += '</div>\n</nav>'
     return content
 
@@ -890,7 +890,7 @@ def root_access(type_to_display, home_list, user_list, room_list, plant_list, ki
     if(type_to_display == '/root_kit'):
         content += '<div class="row">'
         content += '<div class="col-sm-12">'
-        content += '<form class="form-signin" action="http://localhost:8888/root_add_kit" method="post">'
+        content += '<form class="form-signin" action="/root_add_kit" method="post">'
         content += '<h1 class="h3 mb-3 font-weight-normal">ROOT ACCESS : ajouter un kit</h1>'
         content += '<label for="Name" class="sr-only">Name</label>'
         content += '<input id="Name" name="Name" class="form-control" placeholder="Name" required autofocus>'
@@ -908,7 +908,7 @@ def root_access(type_to_display, home_list, user_list, room_list, plant_list, ki
         print('test ajout plante')
         content += '<div class="row">'
         content += '<div class="col-sm-12">'
-        content += '<form class="form-signin" action="http://localhost:8888/kit_connexion" method="post">'
+        content += '<form class="form-signin" action="/kit_connexion" method="post">'
         content += '<h1 class="h3 mb-3 font-weight-normal">ROOT ACCESS : ajouter un module</h1>'
         content += '<label for="Reference" class="sr-only">Reference</label>'
         content += '<input id="Reference" name="Reference" class="form-control" placeholder="Reference" required autofocus>'
@@ -922,7 +922,7 @@ def root_access(type_to_display, home_list, user_list, room_list, plant_list, ki
     if type_to_display == '/root_plant':
         content += '<div class="row">'
         content += '<div class="col-sm-12">'
-        content += '<form class="form-signin" action="http://localhost:8888/root_add_plant" method="post">'
+        content += '<form class="form-signin" action="/root_add_plant" method="post">'
         content += '<h1 class="h3 mb-3 font-weight-normal">ROOT ACCESS : ajouter une référence de plante</h1>'
         content += '<label for="Name" class="sr-only">Name</label>'
         content += '<input id="Name" name="Name" class="form-control" placeholder="Name" required autofocus>'
