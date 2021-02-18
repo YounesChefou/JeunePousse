@@ -1134,7 +1134,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             kit_list = self.mysql.select('/kitreference')
             user_plant_list = self.mysql.select('/plant')
             user_sensor_list = self.mysql.select('/sensoraction')
-            content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
+            content = root_access('/root_add_kit', home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
             self.send_response(REDIRECTION)
 
         elif self.path.lower() == "/root_add_plant":
@@ -1162,7 +1162,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             kit_list = self.mysql.select('/kitreference')
             user_plant_list = self.mysql.select('/plant')
             user_sensor_list = self.mysql.select('/sensoraction')
-            content = root_access(res.path, home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
+            content = root_access('/root_user_plant', home_list, user_list, room_list, plant_list, kit_list, user_plant_list, user_sensor_list)
             self.send_response(REDIRECTION)
 
         elif self.path.lower() == "/connexion":
@@ -1423,6 +1423,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             print(temporary_reference)
             nom_du_kit = "{}".format(data.get('kit_name')[0])
 
+            print(nom_du_kit)
             user_plant_list = self.mysql.select('/plant')
 
             already_in_database = False
@@ -1600,11 +1601,13 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Location', '/')
 
         elif data_type == "json":
+            self.send_response(200)
             body = content.encode("utf8")
             self.send_header("Content-type", "application/json")
             self.send_header("Content-Length", str(len(body)))
 
         else :
+            self.send_response(200)
     	    body = content.encode("utf8")
     	    self.send_header("Content-type", "text/html; charset=utf-8")
     	    self.send_header("Content-Length", str(len(body)))
