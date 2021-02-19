@@ -146,10 +146,6 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
                           i -= 1
               sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
       content += create_one_chart(sensor, p[0])
-    #content += create_one_chart(sensor, str(p[0]))
-    f = open('site/end_header_dashboard.html', 'r')
-    content += f.read()
-    f.close()
     content += html_body
     content += add_nav_bar(1, user[0], active_room, performance, 1) #ajout de la navbar
 
@@ -1591,6 +1587,8 @@ def serve_on_port(port_) :
     server = ThreadingHTTPServer (("", port_) , MyHandler)
     server.serve_forever()
     port.append(server)
+    print("port OPEN")
+    print(port_)
 
 if __name__ == '__main__':
 	# start_capteur_threads()
