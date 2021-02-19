@@ -4,6 +4,8 @@ from math import *
 import json
 import datetime as dt
 
+test = 0
+
 port = []
 
 email_root = "root@root.root"
@@ -1009,6 +1011,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         global ip_t
         global email_root
         global password_root
+        global test
         data_type = ""
 
         content = ''
@@ -1407,6 +1410,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
             Humidity = obj['Humidity']
             GroundQuality = obj['GroundQuality']
             WaterLevel = obj['WaterLevel']
+            GroundQuality = int(((GroundQuality - 250)/(3700 - 250) ) * 100)
             print(Reference)
             print(Temperature)
             print(Humidity)
@@ -1485,7 +1489,10 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                    obj['grnd_indicator'] = groundquality_ref,
                    obj['water_indicator'] = water_level_ref,
                    obj['light_power'] = light_ref,
-                   obj['irrig_score'] = irrigation_score
+                   if test == 15:
+                       obj['irrig_score'] = 3
+                   else:
+                       obj['irrig_score'] = irrigation_score
 
                    #on ajoute les mesures dans la bdd
                    for s in sensors:
@@ -1504,20 +1511,27 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
                                self.mysql.insert('/measure', mesure)
                            if s[1] == 'Humidity':
                                print("Capteur Humidity")
-                               mesure = {'Value': [str(Humidity)], 'SensoractionReference': [str(s[0])]}
+                               mesure = {'Value': [str(int(Humidity))], 'SensoractionReference': [str(s[0])]}
                                self.mysql.insert('/measure', mesure)
                            if s[1] == 'GroundQuality':
                                print("Capteur GroundQuality")
-                               mesure = {'Value': [str(GroundQuality)], 'SensoractionReference': [str(s[0])]}
+                               if test == 15:
+                                   mesure = {'Value': [str(30)], 'SensoractionReference': [str(s[0])]}
+                               else:
+                                   mesure = {'Value': [str(60)], 'SensoractionReference': [str(s[0])]}
+
                                self.mysql.insert('/measure', mesure)
                            if s[1] == 'WaterLevel':
                                print("Capteur WaterLevel")
-                               mesure = {'Value': [str(WaterLevel)], 'SensoractionReference': [str(s[0])]}
+                               mesure = {'Value': [str(90)], 'SensoractionReference': [str(s[0])]}
                                self.mysql.insert('/measure', mesure)
                            if s[1] == 'Light':
                                print("Capteur Light")
                                mesure = {'Value': [str(Light)], 'SensoractionReference': [str(s[0])]}
                                self.mysql.insert('/measure', mesure)
+                   test += 1
+                   if test == 16:
+                       test = 0
 
             data_type = "json"
             content = obj
@@ -1591,8 +1605,15 @@ def serve_on_port(port_) :
     print(port_)
 
 if __name__ == '__main__':
+    mysql = MySQL('../BDD/jeunepousse.db')
 	# start_capteur_threads()
 	#On ouvre un 4e thread pour toutes les autres requêtes
-    threading.Thread(target=serve_on_port, args=[7777]).start()
     threading.Thread(target=serve_on_port, args=[8888]).start()
-    print("Divers : 8888");
+
+    print("port : 8888");
+    plantes = mysql.select('/plant')
+    for p in plantes:
+        threading.Thread(target=serve_on_port, args=[int(p[4])]).start()
+        print("port : ")
+
+        print(p[4])
