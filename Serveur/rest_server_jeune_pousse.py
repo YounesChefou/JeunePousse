@@ -145,7 +145,7 @@ def construct_dashboard(home, user_list, room_list, user_plant_list, kitreferenc
                           value.append((m[1], convert_time(m[3])))
                           i -= 1
               sensor.append((s[1], value, s[2])) #nom du capteur, liste (valeurs, dateinsertion), unite
-      content += create_one_chart(sensor, p[0])
+      #content += create_one_chart(sensor, p[0])
     content += html_body
     content += add_nav_bar(1, user[0], active_room, performance, 1) #ajout de la navbar
 
